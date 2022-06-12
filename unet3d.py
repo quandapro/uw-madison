@@ -1,0 +1,93 @@
+import tensorflow as tf
+from tensorflow.keras.layers import *
+from tensorflow.keras.models import *
+'''
+    3D-UNET
+'''
+class Unet3D:
+    def __init__(self, num_classes = 3, 
+                 input_shape = (144, 384, 384, 1),
+                 conv_settings = [16, 32, 64, 128, 256], 
+                 repeat = [2, 2, 2, 2],
+                 activation = 'sigmoid'):
+        self.input_shape = input_shape
+        self.num_classes = num_classes
+        self.conv_settings = conv_settings
+        self.repeat = repeat
+        self.activation = activation
+    
+    def conv_in_relu(self, inp, kernels, kernel_size = 3, stride = 1, bn_relu = True):
+        x = inp
+        x = Conv3D(kernels, 
+                    kernel_size = kernel_size,
+                    padding = 'same',
+                    strides = stride)(x)
+        if bn_relu:
+            x = BatchNormalization()(x)
+            x = ReLU()(x)
+        return x
+    
+    def conv_block(self, inp, kernels, repeat = 2, downsample = False):
+        '''
+            Residual convolution block
+        '''
+        x = inp
+        for i in range(repeat):
+            stride = 1
+            if i == 0 and downsample:
+                stride = 2
+
+            skip_conn = self.conv_in_relu(x, kernels, 1, stride, False)
+
+            x = self.conv_in_relu(x, kernels, 3, stride)
+            x = self.conv_in_relu(x, kernels, bn_relu=False)
+            
+            # Residual connection
+            x = Add()([x, skip_conn])
+            x = BatchNormalization()(x)
+            x = ReLU()(x)
+        return x
+
+    def up_conv_block(self, inp, kernels, connect):
+        x = UpSampling3D()(inp)
+        x = Concatenate(axis=-1)([x, connect]) # Skip connection
+        x = self.conv_in_relu(x, kernels)
+        x = self.conv_in_relu(x, kernels)
+        return x
+
+    def build_model(self):
+        conv_settings = self.conv_settings
+        
+        num_blocks = len(conv_settings)
+        
+        inp = Input(self.input_shape)
+
+        encoder_blocks = []
+
+        # Encoder
+        conv = BatchNormalization()(inp)
+        
+        for i in range(0, num_blocks - 1):
+            if i == 0:
+                conv = self.conv_block(conv, conv_settings[i], self.repeat[i])
+                encoder_blocks.append(conv)
+            else:
+                conv = self.conv_block(conv, conv_settings[i], self.repeat[i], downsample = True)
+                encoder_blocks.append(conv)
+                
+        out = self.conv_block(conv, conv_settings[-1], self.repeat[-1], downsample = True)
+
+        # Decoder
+        for i in range(num_blocks - 1, 0, -1):
+            out = self.up_conv_block(out, conv_settings[i - 1], encoder_blocks[i - 1])
+
+        out = Conv3D(self.num_classes, 
+                     kernel_size = (1, 1, 1), 
+                     padding = 'same')(out)
+        out = Activation(self.activation)(out)
+        model = Model(inputs = inp, outputs = out)
+        return model
+
+if __name__ == '__main__':
+    model = Unet3D().build_model()
+    model.summary(line_length=150)
