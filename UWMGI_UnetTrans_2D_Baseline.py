@@ -9,6 +9,27 @@ import os
 import random
 import tensorflow as tf
 
+from tensorflow.keras.layers import *
+from tensorflow.keras.models import *
+from tensorflow.keras.optimizers import *
+from tensorflow.keras.callbacks import *
+from tensorflow.keras.losses import *
+from tensorflow.keras.metrics import *
+from segmentation_models.losses import *
+
+import tensorflow.keras.backend as K
+from monai.metrics.utils import get_mask_edges, get_surface_distance
+import math
+
+import gc
+
+from sklearn.model_selection import GroupKFold
+
+from tensorflow.keras.utils import *
+import albumentations as A
+import tqdm
+
+from Model import swin_layers, transformer_layers
 
 DEFAULT_RANDOM_SEED = 2022
 def seed_everything(seed=DEFAULT_RANDOM_SEED):
@@ -23,8 +44,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--backbone", type=str, help="Unet backbone")
 parser.add_argument("--description", type=str, help="Model description")
 args = parser.parse_args()
-
-
 
 '''
     CONFIGURATION
@@ -84,9 +103,6 @@ df_train.sample(5)
 '''
     Data loader
 '''
-from tensorflow.keras.utils import *
-import albumentations as A
-
 transform = A.Compose([
     A.Flip(),
     A.ShiftScaleRotate(border_mode=cv2.BORDER_CONSTANT, value=0., mask_value=0.),
@@ -146,18 +162,6 @@ class DataLoader(Sequence):
 '''
     Metric and loss funtions
 '''
-from tensorflow.keras.layers import *
-from tensorflow.keras.models import *
-from tensorflow.keras.optimizers import *
-from tensorflow.keras.callbacks import *
-from tensorflow.keras.losses import *
-from tensorflow.keras.metrics import *
-from segmentation_models.losses import *
-
-import tensorflow.keras.backend as K
-from monai.metrics.utils import get_mask_edges, get_surface_distance
-import math
-
 max_distance = np.sqrt(IMAGE_SIZE[0] ** 2 + IMAGE_SIZE[1] ** 2)
 
 # Metrics
@@ -259,16 +263,11 @@ class CompetitionMetric(Callback):
             self.model.save_weights(self.model_checkpoint)
             self.best_validation_score = result
 
-from sklearn.model_selection import GroupKFold
 
 skf = GroupKFold(n_splits=KFOLD)
 for fold, (_, val_idx) in enumerate(skf.split(X=df_train, groups =df_train['case']), 1):
     df_train.loc[val_idx, 'fold'] = fold
 df_train.head()
-
-import segmentation_models as sm
-sm.set_framework("tf.keras")
-import gc
 
 def poly_scheduler(epoch, lr, exponent = 0.9):
     return initial_lr * (1 - epoch / no_of_epochs)**exponent
@@ -283,8 +282,8 @@ for fold in range(1, KFOLD + 1):
     train_id, test_id = df_train["id"][df_train["fold"] != fold].values, df_train["id"][df_train["fold"] == fold].values
     train_datagen = DataLoader(train_id, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
     test_datagen = DataLoader(test_id, batch_size=BATCH_SIZE, shuffle=False, augment=None)
-    
-    model = sm.Unet(MODEL_NAME, input_shape=(None, None, 1), classes=3, activation='sigmoid', encoder_weights=None)
+
+    model =
     model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=[dice_large_bowel, dice_small_bowel, dice_stomach, Dice_Coef])
     
     callbacks = [
@@ -333,7 +332,6 @@ for i in range(1, KFOLD):
 
 print(f"{np.mean(val_Dice_Coef)} +- {np.std(val_Dice_Coef)}")
 
-import tqdm
 datagen = DataLoader(df_train["id"], batch_size=BATCH_SIZE, shuffle=False, augment=None)
 i = 0
 model.load_weights(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5')
