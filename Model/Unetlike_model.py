@@ -117,6 +117,8 @@ def build_unet(
         use_batchnorm=True,
 ):
     input_ = backbone.input
+
+    # encoder output
     x = backbone.output
 
     # extract skip connections
@@ -135,7 +137,7 @@ def build_unet(
             skip = skips[i]
         else:
             skip = None
-
+        # each loop design a decoder block with x + skip
         x = decoder_block(decoder_filters[i], stage=i, use_batchnorm=use_batchnorm)(x, skip)
 
     # model head (define number of output classes)
