@@ -65,13 +65,7 @@ class patch_embedding(Layer):
     Embed patches to tokens.
 
     patches_embed = patch_embedding(num_patch, embed_dim)(pathes)
-
     ----------
-    Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner,
-    T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S. and Uszkoreit, J., 2020.
-    An image is worth 16x16 words: Transformers for image recognition at scale.
-    arXiv preprint arXiv:2010.11929.
-
     Input
     ----------
         num_patch: number of patches to be embedded.
