@@ -2,14 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="baa325ec-a148-4bfa-99b4-d528d259a806" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/model/utils/losses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UWMGI_UnetTrans_2D_Baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/UWMGI_UnetTrans_2D_Baseline.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/models/_model_swin_unet_2d.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/_model_swin_unet_2d.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/models/_model_transunet_2d.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/_model_transunet_2d.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/models/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/utils/_backbone_zoo.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/utils/_backbone_zoo.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,15 +31,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "last_opened_file_path": "D:/Github/uw-madison",
-    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Github/uw-madison&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.IDE.editor.colors&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Github-Source\uw-madison\model\models" />
@@ -88,7 +82,14 @@
       <option name="project" value="LOCAL" />
       <updated>1655346042093</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="add model.transunet_2d in lines 290">
+      <created>1655348771583</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1655348771583</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -106,7 +107,8 @@
     <MESSAGE value="add transformer_layers.py" />
     <MESSAGE value="add transunet_2d.py and swin_unet_2d.py" />
     <MESSAGE value="add utilities" />
-    <option name="LAST_COMMIT_MESSAGE" value="add utilities" />
+    <MESSAGE value="add model.transunet_2d in lines 290" />
+    <option name="LAST_COMMIT_MESSAGE" value="add model.transunet_2d in lines 290" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
