@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import *
+import tensorflow.keras.backend as K
+import gc
 '''
     3D-UNET
 '''
@@ -8,7 +10,7 @@ class Unet3D:
     def __init__(self, num_classes = 3, 
                  input_shape = (144, 384, 384, 1),
                  conv_settings = [16, 32, 64, 128, 256], 
-                 repeat = [2, 2, 2, 2],
+                 repeat = [2, 2, 2, 2, 2],
                  activation = 'sigmoid'):
         self.input_shape = input_shape
         self.num_classes = num_classes
@@ -26,8 +28,18 @@ class Unet3D:
             x = BatchNormalization()(x)
             x = ReLU()(x)
         return x
+
+    def upconv_in_relu(self, inp, kernels, kernel_size = 3):
+        x = inp
+        x = Conv3DTranspose(kernels, 
+                            kernel_size = kernel_size,
+                            padding = 'same',
+                            strides = 2)(x)
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+        return x
     
-    def conv_block(self, inp, kernels, repeat = 2, downsample = False):
+    def residual_conv_block(self, inp, kernels, repeat = 2, downsample = False):
         '''
             Residual convolution block
         '''
@@ -55,7 +67,7 @@ class Unet3D:
         x = self.conv_in_relu(x, kernels)
         return x
 
-    def build_model(self):
+    def __call__(self):
         conv_settings = self.conv_settings
         
         num_blocks = len(conv_settings)
@@ -69,13 +81,13 @@ class Unet3D:
         
         for i in range(0, num_blocks - 1):
             if i == 0:
-                conv = self.conv_block(conv, conv_settings[i], self.repeat[i])
+                conv = self.residual_conv_block(conv, conv_settings[i], self.repeat[i])
                 encoder_blocks.append(conv)
             else:
-                conv = self.conv_block(conv, conv_settings[i], self.repeat[i], downsample = True)
+                conv = self.residual_conv_block(conv, conv_settings[i], self.repeat[i], downsample = True)
                 encoder_blocks.append(conv)
                 
-        out = self.conv_block(conv, conv_settings[-1], self.repeat[-1], downsample = True)
+        out = self.residual_conv_block(conv, conv_settings[-1], self.repeat[-1], downsample = True)
 
         # Decoder
         for i in range(num_blocks - 1, 0, -1):
@@ -89,5 +101,7 @@ class Unet3D:
         return model
 
 if __name__ == '__main__':
-    model = Unet3D().build_model()
+    K.clear_session()
+    gc.collect()
+    model = Unet3D()()
     model.summary(line_length=150)
