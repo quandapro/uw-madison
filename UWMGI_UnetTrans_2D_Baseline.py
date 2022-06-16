@@ -287,7 +287,8 @@ for fold in range(1, KFOLD + 1):
     test_datagen = DataLoader(test_id, batch_size=BATCH_SIZE, shuffle=False, augment=None)
 
     model = transUnet_model.transunet_2d(input_size = (None, None, 1),
-                                         num_heads = 3,
+                                         # num_heads = 3,
+                                         n_labels = 3,
                                          filter_num = [64, 128, 256, 512, 1024],
                                          backbone=MODEL_NAME)
     model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=[dice_large_bowel, dice_small_bowel, dice_stomach, Dice_Coef])
