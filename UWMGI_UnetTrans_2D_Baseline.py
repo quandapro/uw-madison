@@ -30,7 +30,7 @@ from tensorflow.keras.utils import *
 import albumentations as A
 import tqdm
 
-from Model import swin_layers, transformer_layers
+from model import swin_layers, transformer_layers
 
 DEFAULT_RANDOM_SEED = 2022
 def seed_everything(seed=DEFAULT_RANDOM_SEED):
@@ -43,7 +43,7 @@ seed_everything()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--backbone", type=str, help="Unet backbone")
-parser.add_argument("--description", type=str, help="Model description")
+parser.add_argument("--description", type=str, help="model description")
 args = parser.parse_args()
 
 '''
@@ -58,7 +58,7 @@ MODEL_NAME = args.backbone
 MODEL_DESC = args.description
 MODEL_OUTPUT = f"./prediction/{MODEL_NAME}/{MODEL_DESC}"
 
-print(f"Model name: {MODEL_NAME}. Description: {MODEL_DESC}")
+print(f"model name: {MODEL_NAME}. Description: {MODEL_DESC}")
 
 IMAGE_SIZE = (384, 384)
 BATCH_SIZE = 16

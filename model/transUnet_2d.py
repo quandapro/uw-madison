@@ -15,13 +15,6 @@ from tensorflow.keras.layers import Layer, MultiHeadAttention, LayerNormalizatio
 def ViT_MLP(X, filter_num, activation='GELU', name='MLP'):
     '''
     The MLP block of ViT.
-
-    ----------
-    Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner,
-    T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S. and Uszkoreit, J., 2020.
-    An image is worth 16x16 words: Transformers for image recognition at scale.
-    arXiv preprint arXiv:2010.11929.
-
     Input
     ----------
         X: the input tensor of MLP, i.e., after MSA and skip connections
@@ -47,15 +40,7 @@ def ViT_block(V, num_heads, key_dim, filter_num_MLP, activation='GELU', name='Vi
     '''
 
     Vision transformer (ViT) block.
-
     ViT_block(V, num_heads, key_dim, filter_num_MLP, activation='GELU', name='ViT')
-
-    ----------
-    Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner,
-    T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S. and Uszkoreit, J., 2020.
-    An image is worth 16x16 words: Transformers for image recognition at scale.
-    arXiv preprint arXiv:2010.11929.
-
     Input
     ----------
         V: embedded input features.
@@ -88,7 +73,6 @@ def ViT_block(V, num_heads, key_dim, filter_num_MLP, activation='GELU', name='Vi
 
     return V_out
 
-
 def transunet_2d_base(input_tensor, filter_num, stack_num_down=2, stack_num_up=2,
                       embed_dim=768, num_mlp=3072, num_heads=12, num_transformer=12,
                       activation='ReLU', mlp_activation='GELU', batch_norm=False, pool=True, unpool=True,
@@ -96,11 +80,6 @@ def transunet_2d_base(input_tensor, filter_num, stack_num_down=2, stack_num_up=2
                       name='transunet'):
     '''
     The base of transUNET with an optional ImageNet-trained backbone.
-
-    ----------
-    Chen, J., Lu, Y., Yu, Q., Luo, X., Adeli, E., Wang, Y., Lu, L., Yuille, A.L. and Zhou, Y., 2021.
-    Transunet: Transformers make strong encoders for medical image segmentation. arXiv preprint arXiv:2102.04306.
-
     Input
     ----------
         input_tensor: the input tensor of the base, e.g., `keras.layers.Inpyt((None, None, 3))`.

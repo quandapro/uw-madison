@@ -41,7 +41,7 @@ seed_everything()
     Arguments parsers
 '''
 parser = argparse.ArgumentParser()
-parser.add_argument("--description", type=str, help="Model description", default="baseline")
+parser.add_argument("--description", type=str, help="model description", default="baseline")
 parser.add_argument("--datafolder", type=str, help="Data folder", default="./preprocessed_144x384x384")
 parser.add_argument("--batch", type=int, help="Batch size", default=16)
 args = parser.parse_args()

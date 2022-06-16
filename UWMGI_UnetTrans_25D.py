@@ -21,7 +21,7 @@ seed_everything()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--backbone", type=str, help="Unet backbone")
-parser.add_argument("--description", type=str, help="Model description")
+parser.add_argument("--description", type=str, help="model description")
 args = parser.parse_args()
 
 
@@ -39,7 +39,7 @@ MODEL_NAME = args.backbone
 MODEL_DESC = args.description
 MODEL_OUTPUT = f"./prediction/{MODEL_NAME}/{MODEL_DESC}"
 
-print(f"Model name: {MODEL_NAME}. Description: {MODEL_DESC}")
+print(f"model name: {MODEL_NAME}. Description: {MODEL_DESC}")
 
 IMAGE_SIZE = (384, 384)
 BATCH_SIZE = 16

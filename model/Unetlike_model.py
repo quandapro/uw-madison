@@ -158,7 +158,7 @@ def build_unet(
 
 
 # ---------------------------------------------------------------------
-#  Unet Transformer Model
+#  Unet Transformer model
 # ---------------------------------------------------------------------
 
 def UnetTrans(
@@ -198,7 +198,7 @@ def UnetTrans(
         decoder_use_batchnorm: if ``True``, ``BatchNormalisation`` layer between ``Conv2D`` and ``Activation`` layers
             is used.
     Returns:
-        ``keras.models.Model``: **Unet**
+        ``keras.models.model``: **Unet**
     .. _Unet:
         https://arxiv.org/pdf/1505.04597
     """
@@ -248,7 +248,7 @@ def UnetTrans(
     return model
 
 # ---------------------------------------------------------------------
-#  Unet Swin Transformer Model
+#  Unet Swin Transformer model
 # ---------------------------------------------------------------------
 
 def UnetSwinTrans(
@@ -288,7 +288,7 @@ def UnetSwinTrans(
         decoder_use_batchnorm: if ``True``, ``BatchNormalisation`` layer between ``Conv2D`` and ``Activation`` layers
             is used.
     Returns:
-        ``keras.models.Model``: **Unet**
+        ``keras.models.model``: **Unet**
     .. _Unet:
         https://arxiv.org/pdf/1505.04597
     """
