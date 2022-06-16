@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 
-from keras_unet_collection.layer_utils import *
-from keras_unet_collection.activations import GELU, Snake
-from keras_unet_collection._model_unet_2d import UNET_left, UNET_right
-from keras_unet_collection.transformer_layers import patch_extract, patch_embedding
-from keras_unet_collection._backbone_zoo import backbone_zoo, bach_norm_checker
+from model.utils.layer_utils import *
+from model.utils.activations import GELU, Snake
+from model.models._model_unet_2d import UNET_left, UNET_right
+from model.layers.transformer_layers import patch_extract, patch_embedding
+from model.utils._backbone_zoo import backbone_zoo, bach_norm_checker
 
 import tensorflow as tf
 from tensorflow.keras.layers import Input

@@ -44,7 +44,6 @@ layer_cadidates = {
     'block2a_expand_activation', 'block3a_expand_activation', 'block4a_expand_activation', 'block6a_expand_activation',
     'top_activation'), }
 
-
 def bach_norm_checker(backbone_name, batch_norm):
     '''batch norm checker'''
     if 'VGG' in backbone_name:

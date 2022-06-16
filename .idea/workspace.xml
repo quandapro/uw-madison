@@ -2,11 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="baa325ec-a148-4bfa-99b4-d528d259a806" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/model/utils/_backbone_zoo.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/model/utils/utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model/utils/losses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/util_layers.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/utils.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/UWMGI_UnetTrans_2D_Baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/UWMGI_UnetTrans_2D_Baseline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/models/_model_swin_unet_2d.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/_model_swin_unet_2d.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/models/_model_transunet_2d.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/_model_transunet_2d.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/models/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/utils/_backbone_zoo.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/utils/_backbone_zoo.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,7 +81,14 @@
       <option name="project" value="LOCAL" />
       <updated>1655345040604</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="add utilities">
+      <created>1655346042093</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1655346042093</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -95,7 +105,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="add transformer_layers.py" />
     <MESSAGE value="add transunet_2d.py and swin_unet_2d.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="add transunet_2d.py and swin_unet_2d.py" />
+    <MESSAGE value="add utilities" />
+    <option name="LAST_COMMIT_MESSAGE" value="add utilities" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

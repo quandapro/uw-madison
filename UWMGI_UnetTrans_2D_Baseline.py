@@ -22,6 +22,8 @@ from monai.metrics.utils import get_mask_edges, get_surface_distance
 
 import math
 
+import model.models._model_transunet_2d as transUnet_model
+
 import gc
 
 from sklearn.model_selection import GroupKFold
@@ -284,7 +286,9 @@ for fold in range(1, KFOLD + 1):
     train_datagen = DataLoader(train_id, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
     test_datagen = DataLoader(test_id, batch_size=BATCH_SIZE, shuffle=False, augment=None)
 
-    model =
+    model = transUnet_model.transunet_2d(input_size = (None, None, 1),
+                                         filter_num = [64, 128, 256, 512, 1024],
+                                         backbone=MODEL_NAME)
     model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=[dice_large_bowel, dice_small_bowel, dice_stomach, Dice_Coef])
     
     callbacks = [
