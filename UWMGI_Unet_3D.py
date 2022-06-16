@@ -58,7 +58,7 @@ MODEL_NAME = "UNET_3D"
 MODEL_DESC = args.description
 
 NUM_CLASSES = 3
-TRAINING_PATCH_SIZE = (128, 128, 128) # First channel = IMAGE + PREDICTED MASK FROM 2D MODEL. SO PATCH 1ST DIMENSION IS 32 * 32 * NUM_CLASSES
+TRAINING_PATCH_SIZE = (64, 224, 224) # First channel = IMAGE + PREDICTED MASK FROM 2D MODEL. SO PATCH 1ST DIMENSION IS 32 * 32 * NUM_CLASSES
 VALIDATION_PATCH_SIZE = (144, 384, 384)
 AUGMENT = Augment3D(TRAINING_PATCH_SIZE[0])
 BATCH_SIZE = args.batch
@@ -69,7 +69,7 @@ UNET_FILTERS = [16, 32, 64, 128, 256]
 REPEATS = [2, 2, 2, 2, 2]
 initial_lr = 1e-2
 min_lr = 1e-5
-no_of_epochs = 150
+no_of_epochs = 100
 epochs_per_cycle = no_of_epochs
 
 class_map = ["large_bowel", "small_bowel", "stomach"]
@@ -189,10 +189,10 @@ for fold in range(1, KFOLD + 1):
     train_id = [x for x in cases_days if x.split("_")[0] in train_case]
     test_id = [x for x in cases_days if x.split("_")[0] in test_case]
                  
-    train_datagen = DataLoader(train_id, batch_size=BATCH_SIZE, shuffle=True, augment=AUGMENT)
+    train_datagen = DataLoader(train_id, batch_size=BATCH_SIZE, shuffle=True, augment=None)
     test_datagen = DataLoader(test_id, batch_size=1, shuffle=False, augment=None)
     
-    model = Unet3D(conv_settings = UNET_FILTERS, repeat = REPEATS, input_shape = (None, None, None, 1), num_classes = 3).build_model()
+    model = Unet3D(conv_settings = UNET_FILTERS, repeat = REPEATS, input_shape = (None, None, None, 1), num_classes = 3)()
     model.summary(line_length=150)
 
     optimizer = SGD(momentum=0.9, nesterov=True)
@@ -203,7 +203,7 @@ for fold in range(1, KFOLD + 1):
     
     callbacks = [
         ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', verbose=1, save_best_only=True, monitor="val_Dice_Coef", mode='max'),
-        ReduceLROnPlateau(patience=10, factor=0.5, monitor="val_Dice_Coef", mode='max', verbose=1, min_lr=min_lr),
+        LearningRateScheduler(schedule=cosine_scheduler, verbose=1),
         CSVLogger(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.csv', separator=",", append=False)
     ]
 
@@ -213,7 +213,7 @@ for fold in range(1, KFOLD + 1):
                                validation_data=test_datagen,
                                verbose=2)
     hists.append(hist)
-    break
+    # break
 
 '''
     Plot learning curves
@@ -243,6 +243,6 @@ val_Dice_Coef = []
 for i in range(1, KFOLD + 1):
     plot_training_result(hists[i-1], i)
     val_Dice_Coef.append(np.max(hists[i-1].history['val_Dice_Coef']))
-    break
+    # break
 
 print(f"{np.mean(val_Dice_Coef)} +- {np.std(val_Dice_Coef)}")
