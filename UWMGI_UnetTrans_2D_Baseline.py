@@ -289,8 +289,9 @@ for fold in range(1, KFOLD + 1):
     model = transUnet_model.transunet_2d(input_size = (None, None, 1),
                                          # num_heads = 3,
                                          n_labels = 3,
-                                         filter_num = [64, 128, 256, 512, 1024],
+                                         filter_num = [16, 64, 256, 512],
                                          backbone=MODEL_NAME)
+
     model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=[dice_large_bowel, dice_small_bowel, dice_stomach, Dice_Coef])
     
     callbacks = [
