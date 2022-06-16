@@ -1,0 +1,30 @@
+# import tqdm
+
+# i = 0
+# while i < len(df_train):
+#     case = df_train["case"][i]
+#     day = df_train["day"][i]
+#     # Determine number of slices ahead
+#     num_slices = len(os.listdir( os.path.dirname(df_train["path"][i]) ))
+            
+#     volume = np.load(f"./preprocessed_144x384x384/case{case}_day{day}.npy")
+#     volume = np.expand_dims(volume, axis=-1)
+#     gt_mask_volume = np.load(f"./preprocessed_144x384x384/case{case}_day{day}_mask.npy")
+    
+#     pred_mask_volume = []
+#     pred_mask_volume = np.empty((num_slices, 384, 384, 3), dtype='float32')
+#     for j in range(num_slices): # Loop and preprocess each scan
+#         scan_id = df_train["id"][i + j]
+#         pred_mask_volume[j] = np.load(f"{PREDICTION_FOLDER}/{scan_id}_predict.npy")
+#     pred_mask_volume = center_padding_3d([pred_mask_volume])[0]     
+#     volume = np.concatenate([volume, pred_mask_volume], axis=-1)
+        
+#     d, w, h = TRAINING_PATCH_SIZE
+    
+#     for m in range(IMAGE_SIZE[0] // d): 
+#         patch = volume[m * d:(m + 1) * d]
+#         patch_mask = gt_mask_volume[m * d:(m + 1) * d]
+#         np.save(f"{preprocessed_folder}/case{case}_day{day}_{m}.npy", patch)
+#         np.save(f"{preprocessed_folder}/case{case}_day{day}_{m}_mask.npy", patch_mask)
+    
+#     i += num_slices
