@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="baa325ec-a148-4bfa-99b4-d528d259a806" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/model/layers/transformer_layers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model/models/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model/models/_model_swin_unet_2d.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model/models/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/transUnet_2d.py" beforeDir="false" afterPath="$PROJECT_DIR$/model/models/_model_transunet_2d.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,6 +43,11 @@
     "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Github-Source\uw-madison\model\models" />
+    </key>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -48,6 +57,14 @@
       <option name="presentableId" value="Default" />
       <updated>1655086158918</updated>
     </task>
+    <task id="LOCAL-00001" summary="add transformer_layers.py">
+      <created>1655341696564</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1655341696564</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -60,5 +77,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="add transformer_layers.py" />
+    <option name="LAST_COMMIT_MESSAGE" value="add transformer_layers.py" />
   </component>
 </project>
