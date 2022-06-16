@@ -40,7 +40,7 @@ seed_everything()
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("--description", type=str, help="Model description", default="cascade")
+parser.add_argument("--description", type=str, help="model description", default="cascade")
 parser.add_argument("--datafolder", type=str, help="Data folder", default="./preprocessed_144x384x384_16_cascade")
 parser.add_argument("--prediction", type=str, help="Unet2D prediction folder", default="./prediction/resnet34/resnet34_tda")
 parser.add_argument("--batch", type=int, help="Batch size", default=2)
