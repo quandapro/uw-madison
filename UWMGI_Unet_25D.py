@@ -38,7 +38,7 @@ parser.add_argument("--batch", type=int, help="Batch size", default=16)
 parser.add_argument("--datafolder", type=str, help="Data folder", default='preprocessed_384x384_2_25d')
 parser.add_argument("--seed", type=int, help="Seed for random generator", default=2022)
 parser.add_argument("--csv", type=str, help="Dataframe path", default='preprocessed_train.csv')
-parser.add_argument("--trainsize", type=str, help="Training image size", default="384x384x5")
+parser.add_argument("--trainsize", type=str, help="Training image size", default="224x224x5")
 parser.add_argument("--validsize", type=str, help="Training image size", default="384x384x5")
 parser.add_argument("--fold", type=int, help="Number of folds", default=5)
 parser.add_argument("--epoch", type=int, help="Number of epochs", default=50)
@@ -138,12 +138,28 @@ if __name__ == "__main__":
         train_datagen = DataLoader(train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
         test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=False, augment=None)
         
-        if MODEL_NAME != "transunet":
-            model = sm.Unet(MODEL_NAME, input_shape=(None, None, TRAINING_SIZE[-1]), classes=NUM_CLASSES, activation='sigmoid', encoder_weights=None)
+        if MODEL_NAME == "transunet":
+            model = models.transunet_2d(TRAINING_SIZE, [16, 64, 128, 256, 512], NUM_CLASSES, weights=None, batch_norm=True, freeze_backbone=False, freeze_batch_norm=False, output_activation='Sigmoid', backbone=None)
+            model.summary()
+            break
+        elif MODEL_NAME == "swinunet":
+            model = models.swin_unet_2d(input_size=TRAINING_SIZE, 
+                                        filter_num_begin=TRAINING_SIZE[-1], 
+                                        n_labels=NUM_CLASSES, 
+                                        depth=4, 
+                                        stack_num_down=2, 
+                                        stack_num_up=2,
+                                        patch_size=(4, 4), 
+                                        num_heads=[3, 6, 12, 14],
+                                        window_size=[7, 7, 7, 7], 
+                                        num_mlp=96,
+                                        output_activation="Sigmoid")
+            model.summary()
+            break
         else:
-            model = models.transunet_2d(TRAINING_SIZE, [16, 64, 256, 512], NUM_CLASSES, weights=None, batch_norm=True, freeze_backbone=False, freeze_batch_norm=False, output_activation='Sigmoid', backbone='ResNet50')
-        model.summary()
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[dice_large_bowel, dice_small_bowel, dice_stomach, Dice_Coef])
+            model = sm.Unet(MODEL_NAME, input_shape=(None, None, TRAINING_SIZE[-1]), classes=NUM_CLASSES, activation='sigmoid', encoder_weights=None)
+        
+        model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=[dice_large_bowel, dice_small_bowel, dice_stomach, Dice_Coef])
         
         callbacks = [
             ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', verbose=1, save_best_only=True, monitor="val_Dice_Coef", mode='max'),
@@ -160,7 +176,7 @@ if __name__ == "__main__":
     # PLOT TRAINING RESULTS
     val_Dice_Coef = []
 
-    for i in range(1, KFOLD):
+    for i in range(1, KFOLD + 1):
         plot_training_result(hists[i-1], i)
         val_Dice_Coef.append(np.max(hists[i-1].history['val_Dice_Coef']))
 
