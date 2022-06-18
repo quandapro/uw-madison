@@ -39,5 +39,5 @@ class DataLoader(Sequence):
             if self.augment is not None:
                 X[i], y[i] = self.augment(image, mask)
             else:
-                X[i], y[i] = image, mask
+                X[i], y[i] = image.reshape(X.shape[1:]), mask
         return X, y

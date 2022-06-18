@@ -8,7 +8,7 @@ import gc
 '''
 class Unet3D:
     def __init__(self, num_classes = 3, 
-                 input_shape = (144, 384, 384, 1),
+                 input_shape = (None, None, None, 1),
                  conv_settings = [16, 32, 64, 128, 256], 
                  repeat = [2, 2, 2, 2, 2],
                  activation = 'sigmoid'):
