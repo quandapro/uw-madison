@@ -24,7 +24,7 @@ from tensorflow.keras.metrics import *
 import tensorflow.keras.backend as K
 from sklearn.model_selection import GroupKFold
 
-from metrics import Dice_Coef, bce_dice_loss
+from metrics import Dice_Coef, bce_dice_loss, CompetitionMetric
 from unet3d import Unet3D
 from dataloader import DataLoader
 from utils import seed_everything, poly_scheduler, cosine_scheduler, preprocess_dataframe
@@ -40,7 +40,7 @@ parser.add_argument("--batch", type=int, help="Batch size", default=16)
 parser.add_argument("--datafolder", type=str, help="Data folder", default='preprocessed_144x384x384')
 parser.add_argument("--seed", type=int, help="Seed for random generator", default=2022)
 parser.add_argument("--csv", type=str, help="Dataframe path", default='preprocessed_train.csv')
-parser.add_argument("--trainsize", type=str, help="Training image size", default="80x224x224x1")
+parser.add_argument("--trainsize", type=str, help="Training image size", default="64x224x224x1")
 parser.add_argument("--validsize", type=str, help="Validation image size", default="144x384x384x1")
 parser.add_argument("--unet", type=str, help="Unet conv settings", default="16x32x64x128x256")
 parser.add_argument("--resnet", type=int, help="Unet residual conv repeats", default=2)
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         train_datagen = DataLoader(train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
         test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
         
-        model = Unet3D(conv_settings=UNET_FILTERS)()
+        model = Unet3D(conv_settings=UNET_FILTERS, repeat=REPEATS)()
         
         model.compile(optimizer=Adam(), loss=bce_dice_loss(axis=(0,1,2,3)), metrics=[Dice_Coef(axis=(0,1,2,3))])
         
