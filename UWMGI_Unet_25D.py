@@ -137,7 +137,7 @@ if __name__ == "__main__":
         
         model = sm.Unet(MODEL_NAME, input_shape=(None, None, TRAINING_SIZE[-1]), classes=NUM_CLASSES, activation='sigmoid', encoder_weights=None)
         
-        model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=[Dice_Coef()])
+        model.compile(optimizer=Adam(), loss=bce_dice_loss(), metrics=[Dice_Coef()])
         
         callbacks = [
             ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', verbose=1, save_best_only=True, monitor="val_Dice_Coef", mode='max'),
