@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: uw-madison-unet-3d-baseline
+  name: uw-madison-attunet-resnet50
 spec:
   restartPolicy: Never
 
@@ -31,7 +31,7 @@ spec:
       - "/bin/sh"
       - "-c"
     args:
-      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_3D.py --batch 2 --description baseline --trainsize 80x192x192x1 --unet 32x64x128x256x320
+      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_25D.py --backbone attention_unet --description attention_unet
     securityContext:
       allowPrivilegeEscalation: false
 
@@ -40,3 +40,4 @@ spec:
         nvidia.com/gpu: 1
       limits:
         nvidia.com/gpu: 1
+  nodeName: gpu-3

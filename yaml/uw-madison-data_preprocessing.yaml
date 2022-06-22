@@ -34,5 +34,3 @@ spec:
       - cd /home/id202088518/Quan/uw-madison; python3 Prepare_Dataset.py
     securityContext:
       allowPrivilegeEscalation: false
-
-  nodeName: gpu-3

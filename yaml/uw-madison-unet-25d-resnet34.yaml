@@ -31,7 +31,7 @@ spec:
       - "/bin/sh"
       - "-c"
     args:
-      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_25D.py --backbone resnet34 --description resnet34_tda_25d
+      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_25D.py --backbone resnet34 --description resnet34_25d
     securityContext:
       allowPrivilegeEscalation: false
 

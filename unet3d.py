@@ -10,12 +10,10 @@ class Unet3D:
     def __init__(self, num_classes = 3, 
                  input_shape = (None, None, None, 1),
                  conv_settings = [16, 32, 64, 128, 256], 
-                 repeat = [2, 2, 2, 2, 2],
                  activation = 'sigmoid'):
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.conv_settings = conv_settings
-        self.repeat = repeat
         self.activation = activation
     
     def conv_in_relu(self, inp, kernels, kernel_size = 3, stride = 1, bn_relu = True):
@@ -28,36 +26,16 @@ class Unet3D:
             x = BatchNormalization()(x)
             x = ReLU()(x)
         return x
-
-    def upconv_in_relu(self, inp, kernels, kernel_size = 3):
-        x = inp
-        x = Conv3DTranspose(kernels, 
-                            kernel_size = kernel_size,
-                            padding = 'same',
-                            strides = 2)(x)
-        x = BatchNormalization()(x)
-        x = ReLU()(x)
-        return x
     
-    def residual_conv_block(self, inp, kernels, repeat = 2, downsample = False):
+    def conv_block(self, inp, kernels, downsample = False):
         '''
-            Residual convolution block
+            Basic convolution block vgg styles
         '''
         x = inp
-        for i in range(repeat):
-            stride = 1
-            if i == 0 and downsample:
-                stride = 2
-
-            skip_conn = self.conv_in_relu(x, kernels, 1, stride, False)
-
-            x = self.conv_in_relu(x, kernels, 3, stride)
-            x = self.conv_in_relu(x, kernels, bn_relu=False)
-            
-            # Residual connection
-            x = Add()([x, skip_conn])
-            x = BatchNormalization()(x)
-            x = ReLU()(x)
+        if downsample:
+            x = self.conv_in_relu(x, kernels, kernel_size=1, stride=2)
+        x = self.conv_in_relu(x, kernels, kernel_size=3, stride=1)
+        x = self.conv_in_relu(x, kernels, kernel_size=3, stride=1)
         return x
 
     def up_conv_block(self, inp, kernels, connect):
@@ -81,21 +59,22 @@ class Unet3D:
         
         for i in range(0, num_blocks - 1):
             if i == 0:
-                conv = self.residual_conv_block(conv, conv_settings[i], self.repeat[i])
+                conv = self.conv_block(conv, conv_settings[i])
                 encoder_blocks.append(conv)
             else:
-                conv = self.residual_conv_block(conv, conv_settings[i], self.repeat[i], downsample = True)
+                conv = self.conv_block(conv, conv_settings[i], downsample = True)
                 encoder_blocks.append(conv)
                 
-        out = self.residual_conv_block(conv, conv_settings[-1], self.repeat[-1], downsample = True)
+        out = self.conv_block(conv, conv_settings[-1], downsample = True)
 
         # Decoder
         for i in range(num_blocks - 1, 0, -1):
             out = self.up_conv_block(out, conv_settings[i - 1], encoder_blocks[i - 1])
 
         out = Conv3D(self.num_classes, 
-                     kernel_size = (1, 1, 1), 
-                     padding = 'same')(out)
+                    kernel_size = (1, 1, 1), 
+                    padding = 'same')(out)
+
         out = Activation(self.activation)(out)
         model = Model(inputs = inp, outputs = out)
         return model

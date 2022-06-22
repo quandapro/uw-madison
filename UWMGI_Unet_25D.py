@@ -14,6 +14,7 @@ from sklearn.model_selection import GroupKFold
 import os
 
 import tensorflow as tf
+import tensorflow_addons as tfa
 import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import *
 from tensorflow.keras.losses import *
@@ -135,9 +136,11 @@ if __name__ == "__main__":
         train_datagen = DataLoader(train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
         test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=False, augment=None)
         
-        model = sm.Unet(MODEL_NAME, input_shape=(None, None, TRAINING_SIZE[-1]), classes=NUM_CLASSES, activation='sigmoid', encoder_weights=None)
+        model = sm.Unet(MODEL_NAME, input_shape=(None, None, TRAINING_SIZE[-1]), classes=NUM_CLASSES, activation='sigmoid', encoder_weights=None, decoder_filters=(320, 256, 128, 64, 32))
         
-        model.compile(optimizer=Adam(), loss=bce_dice_loss(), metrics=[Dice_Coef()])
+        optimizer = Adam()
+
+        model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(0, 1, 2), mean_axis=None), metrics=[Dice_Coef()])
         
         callbacks = [
             ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', verbose=1, save_best_only=True, monitor="val_Dice_Coef", mode='max'),

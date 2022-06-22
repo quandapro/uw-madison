@@ -24,8 +24,9 @@ from tensorflow.keras.metrics import *
 import tensorflow.keras.backend as K
 from sklearn.model_selection import GroupKFold
 
-from metrics import Dice_Coef, bce_dice_loss, CompetitionMetric
+from metrics import Dice_Coef, bce_dice_loss, dice_loss
 from unet3d import Unet3D
+from residual_unet3d import ResUnet3D
 from dataloader import DataLoader
 from utils import seed_everything, poly_scheduler, cosine_scheduler, preprocess_dataframe
 from augment3d import Augment3D
@@ -43,7 +44,6 @@ parser.add_argument("--csv", type=str, help="Dataframe path", default='preproces
 parser.add_argument("--trainsize", type=str, help="Training image size", default="64x224x224x1")
 parser.add_argument("--validsize", type=str, help="Validation image size", default="144x384x384x1")
 parser.add_argument("--unet", type=str, help="Unet conv settings", default="16x32x64x128x256")
-parser.add_argument("--resnet", type=int, help="Unet residual conv repeats", default=2)
 parser.add_argument("--fold", type=int, help="Number of folds", default=5)
 parser.add_argument("--epoch", type=int, help="Number of epochs", default=150)
 args = parser.parse_args()
@@ -68,8 +68,7 @@ NUM_CLASSES = 3
 augment = Augment3D(TRAINING_SIZE[0], TRAINING_SIZE[1], TRAINING_SIZE[2])
 
 UNET_FILTERS = [int(x) for x in args.unet.split("x")]
-REPEATS = [args.resnet] * len(UNET_FILTERS)
-initial_lr = 1e-3
+initial_lr = 3e-4
 min_lr = 1e-6
 no_of_epochs = args.epoch
 epochs_per_cycle = no_of_epochs
@@ -145,13 +144,15 @@ if __name__ == "__main__":
         train_datagen = DataLoader(train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
         test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
         
-        model = Unet3D(conv_settings=UNET_FILTERS, repeat=REPEATS)()
+        model = Unet3D(conv_settings=UNET_FILTERS)()
+
+        optimizer = Adam()
         
-        model.compile(optimizer=Adam(), loss=bce_dice_loss(axis=(0,1,2,3)), metrics=[Dice_Coef(axis=(0,1,2,3))])
+        model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(0, 1, 2, 3), mean_axis=None), metrics=[Dice_Coef(spartial_axis=(2,3), mean_axis=(2, 1, 0))])
         
         callbacks = [
             ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', verbose=1, save_best_only=True, monitor="val_Dice_Coef", mode='max'),
-            LearningRateScheduler(schedule=cosine_scheduler(initial_lr, min_lr, no_of_epochs), verbose=1),
+            LearningRateScheduler(schedule=poly_scheduler(initial_lr, no_of_epochs), verbose=1),
             CSVLogger(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.csv', separator=",", append=False)
         ]
         hist = model.fit_generator(train_datagen, 
@@ -160,6 +161,7 @@ if __name__ == "__main__":
                                 validation_data=test_datagen,
                                 verbose=2)
         hists.append(hist)
+        break
 
     # PLOT TRAINING RESULTS
     val_Dice_Coef = []
@@ -167,6 +169,7 @@ if __name__ == "__main__":
     for i in range(1, KFOLD + 1):
         plot_training_result(hists[i-1], i)
         val_Dice_Coef.append(np.max(hists[i-1].history['val_Dice_Coef']))
+        break
 
     print(val_Dice_Coef)
     print(f"{np.mean(val_Dice_Coef)} +- {np.std(val_Dice_Coef)}")

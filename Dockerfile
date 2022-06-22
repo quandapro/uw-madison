@@ -29,6 +29,4 @@ RUN pip3 install \
     ipywidgets \
     tensorflow-addons
 
-RUN pip3 install keras-unet-collection
-
 

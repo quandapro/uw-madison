@@ -100,6 +100,31 @@ def center_padding_3d(volumes, desired_shape):
         result_volume[padding_h:padding_h + h, padding_w:padding_w + w, padding_d:padding_d + d] = volume
         results.append(result_volume)
     return results
+
+def make_divisible(num, divisible=16):
+    mod = num % divisible
+    if mod == 0:
+        return num
+    return num + (divisible - mod)
+
+def center_padding_3d(volumes, divisible=16):
+    results = []
+    for volume in volumes:      
+        h, w, d = volume.shape[:3]
+        desired_h, desired_w, desired_d = make_divisible(h, divisible), make_divisible(w, divisible), make_divisible(d, divisible)
+        desired_shape = (desired_h, desired_w, desired_d)
+        
+        padding_h = (desired_h - h) // 2
+        padding_w = (desired_w - w) // 2
+        padding_d = (desired_d - d) // 2
+
+        result_volume = np.zeros(desired_shape, dtype=volume.dtype)
+        if len(volume.shape) == 4:
+            result_volume = np.zeros((*desired_shape, volume.shape[3]), dtype=volume.dtype)
+        result_volume[padding_h:padding_h + h, padding_w:padding_w + w, padding_d:padding_d + d] = volume
+        results.append(result_volume)
+    return results
+
 '''
     Preprocessing function
 '''
@@ -123,8 +148,9 @@ def zscore_norm(volume):
     return (volume - mean) / std
 
 def preprocess(volume, top = TOP_CLIP_PERCENT, bottom = BOTTOM_CLIP_PERCENT):
-    clipped_volume = clipping(volume, top, bottom)
-    return minmax_norm(clipped_volume)
+    # clipped_volume = clipping(volume, top, bottom)
+    # return minmax_norm(clipped_volume)
+    return zscore_norm(volume)
 
 '''
     Preprocess and save to disk
@@ -159,7 +185,7 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
         scan_volume[j] = image
         mask_volume[j] = mask
 
-    scan_volume = preprocess(scan_volume)
+    # scan_volume = preprocess(scan_volume)
     
     # scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], IMAGE_SIZE_3D)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}.npy", scan_volume)
