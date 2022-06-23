@@ -32,12 +32,12 @@ from utils import *
 parser = argparse.ArgumentParser()
 parser.add_argument("--backbone", type=str, help="Unet backbone")
 parser.add_argument("--description", type=str, help="Model description", default="25d")
-parser.add_argument("--batch", type=int, help="Batch size", default=16)
-parser.add_argument("--datafolder", type=str, help="Data folder", default='preprocessed_384x384_2_25d')
+parser.add_argument("--batch", type=int, help="Batch size", default=32)
+parser.add_argument("--datafolder", type=str, help="Data folder", default='preprocessed_384x384_1_25d')
 parser.add_argument("--seed", type=int, help="Seed for random generator", default=2022)
 parser.add_argument("--csv", type=str, help="Dataframe path", default='preprocessed_train.csv')
-parser.add_argument("--trainsize", type=str, help="Training image size", default="224x224x5")
-parser.add_argument("--validsize", type=str, help="Validation image size", default="384x384x5")
+parser.add_argument("--trainsize", type=str, help="Training image size", default="224x224x3")
+parser.add_argument("--validsize", type=str, help="Validation image size", default="384x384x3")
 parser.add_argument("--fold", type=int, help="Number of folds", default=5)
 parser.add_argument("--epoch", type=int, help="Number of epochs", default=50)
 args = parser.parse_args()
@@ -62,8 +62,9 @@ NUM_CLASSES = 3
 TRANSFORM = A.Compose([
     A.RandomCrop(TRAINING_SIZE[0], TRAINING_SIZE[1]),
     A.HorizontalFlip(p=0.5),
-    A.ShiftScaleRotate(border_mode=cv2.BORDER_CONSTANT, value=0., mask_value=0.),
-    A.GridDistortion(p=0.2, border_mode=cv2.BORDER_CONSTANT, value=0., mask_value=0.)
+    A.ShiftScaleRotate(p=0.5),
+    A.GridDistortion(p=0.2),
+    A.RandomGamma(p=0.2),
 ])
 
 initial_lr = 1e-3
@@ -136,15 +137,15 @@ if __name__ == "__main__":
         train_datagen = DataLoader(train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
         test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=False, augment=None)
         
-        model = sm.Unet(MODEL_NAME, input_shape=(None, None, TRAINING_SIZE[-1]), classes=NUM_CLASSES, activation='sigmoid', encoder_weights=None, decoder_filters=(320, 256, 128, 64, 32))
+        model = sm.Unet(MODEL_NAME, input_shape=(None, None, TRAINING_SIZE[-1]), classes=NUM_CLASSES, activation='sigmoid', encoder_weights='imagenet')
         
         optimizer = Adam()
 
-        model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(0, 1, 2), mean_axis=None), metrics=[Dice_Coef()])
+        model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(1, 2)), metrics=[Dice_Coef(spartial_axis=(1, 2), ignore_empty=True)])
         
         callbacks = [
             ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', verbose=1, save_best_only=True, monitor="val_Dice_Coef", mode='max'),
-            LearningRateScheduler(schedule=cosine_scheduler(initial_lr, min_lr, no_of_epochs), verbose=1),
+            LearningRateScheduler(schedule=poly_scheduler(initial_lr, no_of_epochs), verbose=1),
             CSVLogger(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.csv', separator=",", append=False)
         ]
         hist = model.fit_generator(train_datagen, 
