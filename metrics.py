@@ -17,12 +17,10 @@ def Dice_Coef(spartial_axis = (1,2), mean_axis=(1, 0), smooth=1e-6):
         tp = tf.math.reduce_sum(y_true * y_pred, axis=spartial_axis) # calculate True Positive
         fn = tf.math.reduce_sum(y_true * (1 - y_pred), axis=spartial_axis) # calculate False Negative
         fp = tf.math.reduce_sum((1 - y_true) * y_pred, axis=spartial_axis) # calculate False Positive 
-        numerator = 2 * tp
-        denominator = 2 * tp + fn + fp
+        numerator = 2 * tp + smooth
+        denominator = 2 * tp + fn + fp + smooth
 
-        nonzero = tf.math.count_nonzero(denominator)
-        nonzero = tf.cast(nonzero, dtype=tf.float32)
-        return tf.math.reduce_sum(numerator / (denominator + smooth) ) / nonzero # Ignore cases where both masks are empty
+        return tf.math.reduce_mean(numerator / denominator, axis=mean_axis)
     return Dice_Coef
 
 def dice_loss(spartial_axis=(1,2,3), mean_axis=(1, 0), smooth = 1e-6):

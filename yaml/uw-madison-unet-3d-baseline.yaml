@@ -31,7 +31,7 @@ spec:
       - "/bin/sh"
       - "-c"
     args:
-      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_3D.py --batch 2 --description baseline --trainsize 80x192x192x1 --unet 32x64x128x256x320
+      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_3D.py --batch 4 --description baseline_v1
     securityContext:
       allowPrivilegeEscalation: false
 

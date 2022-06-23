@@ -26,7 +26,6 @@ from sklearn.model_selection import GroupKFold
 
 from metrics import Dice_Coef, bce_dice_loss, dice_loss
 from unet3d import Unet3D
-from residual_unet3d import ResUnet3D
 from dataloader import DataLoader
 from utils import seed_everything, poly_scheduler, cosine_scheduler, preprocess_dataframe
 from augment3d import Augment3D
@@ -65,7 +64,7 @@ BATCH_SIZE = args.batch
 KFOLD = args.fold
 NUM_CLASSES = 3
 
-augment = Augment3D(TRAINING_SIZE[0], TRAINING_SIZE[1], TRAINING_SIZE[2])
+augment = Augment3D(TRAINING_SIZE[0], TRAINING_SIZE[1], TRAINING_SIZE[2], NUM_CLASSES)
 
 UNET_FILTERS = [int(x) for x in args.unet.split("x")]
 initial_lr = 3e-4

@@ -166,8 +166,8 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
     current_index = case_index[i]
     num_scans = case_index[i + 1] - current_index
     image, size = open_image(df_train["path"][current_index])
-    scan_volume = np.empty((num_scans, *size), dtype=image.dtype)
-    mask_volume = np.empty((num_scans, *size, 3), dtype='uint8')
+    scan_volume = np.empty((*size, num_scans), dtype=image.dtype)
+    mask_volume = np.empty((*size, num_scans, 3), dtype='uint8')
     
     case = df_train["case"][current_index]
     day = df_train["day"][current_index]
@@ -182,8 +182,8 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
             decoded = rle_decode(rle, size)
             mask[:,:,k] = decoded
         
-        scan_volume[j] = image
-        mask_volume[j] = mask
+        scan_volume[..., j] = image
+        mask_volume[:, :, j, :] = mask
 
     # scan_volume = preprocess(scan_volume)
     
