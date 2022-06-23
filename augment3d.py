@@ -13,8 +13,7 @@ class Augment3D:
                             A.HorizontalFlip(p=0.5),
                             A.ShiftScaleRotate(p=0.5),
                             A.GridDistortion(p=0.2),
-                            A.RandomGamma(p=0.2),
-                            A.RandomBrightnessContrast(p=0.2)
+                            A.RandomGamma(p=0.2)
                         ], additional_targets=keys)
         self.d = image_depth
         self.w = image_width
