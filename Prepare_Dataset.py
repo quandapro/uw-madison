@@ -16,6 +16,7 @@ TRAIN_DIR = './train/' # case/cases_day/scans
 preprocessed_folder_3d = './preprocessed_3d'
 df = pd.read_csv("./train.csv")
 
+IMAGE_SIZE_3D = (144, 384, 384)
 NUM_CLASSES = 3
 TOP_CLIP_PERCENT = 2
 BOTTOM_CLIP_PERCENT = 2
@@ -101,30 +102,6 @@ def center_padding_3d(volumes, desired_shape):
         results.append(result_volume)
     return results
 
-def make_divisible(num, divisible=16):
-    mod = num % divisible
-    if mod == 0:
-        return num
-    return num + (divisible - mod)
-
-def center_padding_3d(volumes, divisible=16):
-    results = []
-    for volume in volumes:      
-        h, w, d = volume.shape[:3]
-        desired_h, desired_w, desired_d = make_divisible(h, divisible), make_divisible(w, divisible), make_divisible(d, divisible)
-        desired_shape = (desired_h, desired_w, desired_d)
-        
-        padding_h = (desired_h - h) // 2
-        padding_w = (desired_w - w) // 2
-        padding_d = (desired_d - d) // 2
-
-        result_volume = np.zeros(desired_shape, dtype=volume.dtype)
-        if len(volume.shape) == 4:
-            result_volume = np.zeros((*desired_shape, volume.shape[3]), dtype=volume.dtype)
-        result_volume[padding_h:padding_h + h, padding_w:padding_w + w, padding_d:padding_d + d] = volume
-        results.append(result_volume)
-    return results
-
 '''
     Preprocessing function
 '''
@@ -143,14 +120,15 @@ def minmax_norm(volume):
 
 def zscore_norm(volume):
     volume = volume.astype('float32')
-    mean = volume.mean()
-    std = volume.std()
-    return (volume - mean) / std
+    non_zero = volume[volume != 0]
+    mean = non_zero.mean()
+    std = non_zero.std()
+    volume[volume != 0] = (non_zero - mean) / std
+    return volume
 
 def preprocess(volume, top = TOP_CLIP_PERCENT, bottom = BOTTOM_CLIP_PERCENT):
     # clipped_volume = clipping(volume, top, bottom)
-    # return minmax_norm(clipped_volume)
-    return zscore_norm(volume)
+    return minmax_norm(volume)
 
 '''
     Preprocess and save to disk
@@ -158,6 +136,7 @@ def preprocess(volume, top = TOP_CLIP_PERCENT, bottom = BOTTOM_CLIP_PERCENT):
 import tqdm
 index = 0
 case_index = [0]
+
 while index < len(df_train):
     index += len(os.listdir(os.path.dirname(df_train["path"][index])))
     case_index.append(index)
@@ -166,11 +145,16 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
     current_index = case_index[i]
     num_scans = case_index[i + 1] - current_index
     image, size = open_image(df_train["path"][current_index])
-    scan_volume = np.empty((*size, num_scans), dtype=image.dtype)
-    mask_volume = np.empty((*size, num_scans, 3), dtype='uint8')
+    scan_volume = np.empty((num_scans, *size), dtype=image.dtype)
+    mask_volume = np.empty((num_scans, *size, 3), dtype='uint8')
     
     case = df_train["case"][current_index]
     day = df_train["day"][current_index]
+
+    # Ignore bad cases
+    if (case == 7 and day == 0) or (case == 8 and day == 30):
+        continue
+
     # Create scan and mask volume
     for j in range(num_scans):
         image, size = open_image(df_train["path"][current_index + j])
@@ -182,12 +166,12 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
             decoded = rle_decode(rle, size)
             mask[:,:,k] = decoded
         
-        scan_volume[..., j] = image
-        mask_volume[:, :, j, :] = mask
+        scan_volume[j] = image
+        mask_volume[j] = mask
 
-    # scan_volume = preprocess(scan_volume)
+    scan_volume = preprocess(scan_volume)
     
-    # scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], IMAGE_SIZE_3D)
+    scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], IMAGE_SIZE_3D)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}.npy", scan_volume)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}_mask.npy", mask_volume)
 
