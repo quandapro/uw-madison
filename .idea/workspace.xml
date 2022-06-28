@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="baa325ec-a148-4bfa-99b4-d528d259a806" name="Changes" comment="">
+    <list default="true" id="baa325ec-a148-4bfa-99b4-d528d259a806" name="Changes" comment="add model.transunet_2d in lines 290 with n_labels = 3">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UWMGI_UnetTrans_2D_Baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/UWMGI_UnetTrans_2D_Baseline.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
