@@ -13,6 +13,7 @@ import random
     CONFIGURATION
 '''
 TRAIN_DIR = './train/' # case/cases_day/scans
+preprocessed_folder_2d = './preprocessed_2d'
 preprocessed_folder_3d = './preprocessed_3d'
 df = pd.read_csv("./train.csv")
 
@@ -23,8 +24,8 @@ BOTTOM_CLIP_PERCENT = 2
 
 class_map = ["large_bowel", "small_bowel", "stomach"]
 
-# if not os.path.exists(f"{preprocessed_folder_2d}"):
-#     os.makedirs(f"{preprocessed_folder_2d}")
+if not os.path.exists(f"{preprocessed_folder_2d}"):
+    os.makedirs(f"{preprocessed_folder_2d}")
     
 if not os.path.exists(f"{preprocessed_folder_3d}"):
     os.makedirs(f"{preprocessed_folder_3d}")
@@ -171,6 +172,12 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
 
     scan_volume = preprocess(scan_volume)
     
+    scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], (num_scans, *IMAGE_SIZE_3D[1:]))
+    for j in range(num_scans):
+        scan_id = df_train["id"][current_index + j]
+        np.save(f"{preprocessed_folder_2d}/{scan_id}.npy", scan_volume[j])
+        np.save(f"{preprocessed_folder_2d}/{scan_id}_mask.npy", mask_volume[j])
+
     scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], IMAGE_SIZE_3D)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}.npy", scan_volume)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}_mask.npy", mask_volume)
