@@ -7,20 +7,19 @@ import pandas as pd
 import glob
 import cv2
 import os
-import random
 
 '''
     CONFIGURATION
 '''
 TRAIN_DIR = './train/' # case/cases_day/scans
-preprocessed_folder_2d = './preprocessed_2d'
+preprocessed_folder_2d = './preprocessed_384x384'
 preprocessed_folder_3d = './preprocessed_3d'
 df = pd.read_csv("./train.csv")
 
 IMAGE_SIZE_3D = (144, 384, 384)
 NUM_CLASSES = 3
-TOP_CLIP_PERCENT = 2
-BOTTOM_CLIP_PERCENT = 2
+TOP_CLIP_PERCENT = 95
+BOTTOM_CLIP_PERCENT = 5
 
 class_map = ["large_bowel", "small_bowel", "stomach"]
 
@@ -107,10 +106,10 @@ def center_padding_3d(volumes, desired_shape):
     Preprocessing function
 '''
 def clipping(volume, top = TOP_CLIP_PERCENT, bottom = BOTTOM_CLIP_PERCENT):
-    top_percentile = np.percentile(volume.flatten(), 100 - top)
+    top_percentile = np.percentile(volume.flatten(), top)
     bottom_percentile = np.percentile(volume.flatten(), bottom)
     volume[volume > top_percentile] = top_percentile
-    volume[volume < bottom_percentile] = 0.
+    volume[volume < bottom_percentile] = bottom_percentile
     return volume
 
 def minmax_norm(volume):
@@ -119,16 +118,8 @@ def minmax_norm(volume):
     max_v = volume.max()
     return (volume - min_v) / (max_v - min_v)
 
-def zscore_norm(volume):
-    volume = volume.astype('float32')
-    non_zero = volume[volume != 0]
-    mean = non_zero.mean()
-    std = non_zero.std()
-    volume[volume != 0] = (non_zero - mean) / std
-    return volume
-
 def preprocess(volume, top = TOP_CLIP_PERCENT, bottom = BOTTOM_CLIP_PERCENT):
-    # clipped_volume = clipping(volume, top, bottom)
+    volume = clipping(volume, top, bottom)
     return minmax_norm(volume)
 
 '''
@@ -172,13 +163,13 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
 
     scan_volume = preprocess(scan_volume)
     
-    scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], (num_scans, *IMAGE_SIZE_3D[1:]))
-    for j in range(num_scans):
-        scan_id = df_train["id"][current_index + j]
-        np.save(f"{preprocessed_folder_2d}/{scan_id}.npy", scan_volume[j])
-        np.save(f"{preprocessed_folder_2d}/{scan_id}_mask.npy", mask_volume[j])
+    # scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], (num_scans, *IMAGE_SIZE_3D[1:]))
+    # for j in range(num_scans):
+    #     scan_id = df_train["id"][current_index + j]
+    #     np.save(f"{preprocessed_folder_2d}/{scan_id}.npy", scan_volume[j])
+    #     np.save(f"{preprocessed_folder_2d}/{scan_id}_mask.npy", mask_volume[j])
 
-    scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], IMAGE_SIZE_3D)
+    # scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], IMAGE_SIZE_3D)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}.npy", scan_volume)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}_mask.npy", mask_volume)
 

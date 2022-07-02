@@ -37,3 +37,22 @@ def preprocess_dataframe(df):
     result.fillna('',inplace=True); 
     result['count'] = np.sum(result.iloc[:,1:4]!='',axis=1).values
     return result
+
+def plot_training_result(history, fold, MODEL_NAME, MODEL_DESC):
+    plt.figure(figsize = (8,6))
+    plt.plot(history.history['loss'], '-', label = 'train_loss', color = 'g')
+    plt.plot(history.history['val_loss'], '--', label = 'valid_loss', color ='r')
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.title(f'Fold {fold}: Loss')
+    plt.legend()
+    plt.savefig(f"plot/{MODEL_NAME}/{MODEL_DESC}_fold{fold}_loss.png")
+    
+    plt.figure(figsize = (8,6))
+    plt.plot(history.history['Dice_Coef'], '-', label = 'train_Dice_coef', color = 'g')
+    plt.plot(history.history['val_Dice_Coef'], '--', label = 'valid_Dice_coef', color ='r')
+    plt.xlabel('epoch')
+    plt.ylabel('Dice_Coef')
+    plt.title(f'Fold {fold}: Dice Coef')
+    plt.legend()
+    plt.savefig(f"plot/{MODEL_NAME}/{MODEL_DESC}_fold{fold}_DC.png")

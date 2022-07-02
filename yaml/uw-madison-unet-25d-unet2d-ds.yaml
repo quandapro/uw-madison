@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: uw-madison-unet-2d-resnet34
+  name: uw-madison-unet-25d-unet2d-ds
 spec:
   restartPolicy: Never
 
@@ -31,7 +31,7 @@ spec:
       - "/bin/sh"
       - "-c"
     args:
-      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_2D_Baseline.py --backbone resnet34 --description resnet34_tda_gauss
+      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_25D.py --backbone Unet2D_DS --description unet_ds_25d
     securityContext:
       allowPrivilegeEscalation: false
 

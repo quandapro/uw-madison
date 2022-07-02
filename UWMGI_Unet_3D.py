@@ -24,10 +24,11 @@ from tensorflow.keras.metrics import *
 import tensorflow.keras.backend as K
 from sklearn.model_selection import GroupKFold
 
-from metrics import Dice_Coef, bce_dice_loss, dice_loss
-from unet3d import Unet3D
+from metrics import *
+from model.unet3d import Unet3D
+from model.residual_unet3d import ResUnet3D
 from dataloader import DataLoader
-from utils import seed_everything, poly_scheduler, cosine_scheduler, preprocess_dataframe
+from utils import seed_everything, poly_scheduler, cosine_scheduler, preprocess_dataframe, plot_training_result
 from augment3d import Augment3D
 
 '''
@@ -43,8 +44,10 @@ parser.add_argument("--csv", type=str, help="Dataframe path", default='preproces
 parser.add_argument("--trainsize", type=str, help="Training image size", default="64x224x224x1")
 parser.add_argument("--validsize", type=str, help="Validation image size", default="144x384x384x1")
 parser.add_argument("--unet", type=str, help="Unet conv settings", default="16x32x64x128x256")
+parser.add_argument("--repeat", type=int, help="Unet repeat conv settings", default=2)
+parser.add_argument("--ds", type=int, help="Enable deep supervision", default=0)
 parser.add_argument("--fold", type=int, help="Number of folds", default=5)
-parser.add_argument("--epoch", type=int, help="Number of epochs", default=150)
+parser.add_argument("--epoch", type=int, help="Number of epochs", default=300)
 args = parser.parse_args()
 
 '''
@@ -67,6 +70,8 @@ NUM_CLASSES = 3
 augment = Augment3D(TRAINING_SIZE[0], TRAINING_SIZE[1], TRAINING_SIZE[2], NUM_CLASSES)
 
 UNET_FILTERS = [int(x) for x in args.unet.split("x")]
+REPEAT = [args.repeat] * len(UNET_FILTERS)
+DEEP_SUPERVISION = args.ds != 0
 initial_lr = 3e-4
 min_lr = 1e-6
 no_of_epochs = args.epoch
@@ -74,27 +79,7 @@ epochs_per_cycle = no_of_epochs
 
 class_map = ["large_bowel", "small_bowel", "stomach"]
 
-'''
-    PLOTTING FUNCTIONS
-'''
-def plot_training_result(history, fold):
-    plt.figure(figsize = (8,6))
-    plt.plot(history.history['loss'], '-', label = 'train_loss', color = 'g')
-    plt.plot(history.history['val_loss'], '--', label = 'valid_loss', color ='r')
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.title(f'Fold {fold}: Loss')
-    plt.legend()
-    plt.savefig(f"plot/{MODEL_NAME}/{MODEL_DESC}_fold{fold}_loss.png")
-    
-    plt.figure(figsize = (8,6))
-    plt.plot(history.history['Dice_Coef'], '-', label = 'train_Dice_coef', color = 'g')
-    plt.plot(history.history['val_Dice_Coef'], '--', label = 'valid_Dice_coef', color ='r')
-    plt.xlabel('epoch')
-    plt.ylabel('Dice_Coef')
-    plt.title(f'Fold {fold}: Dice Coef')
-    plt.legend()
-    plt.savefig(f"plot/{MODEL_NAME}/{MODEL_DESC}_fold{fold}_DC.png")
+bad_cases = ["case7_day0", "case81_day30"]
 
 '''
     MAIN PROGRAM
@@ -140,34 +125,36 @@ if __name__ == "__main__":
         
         train_id = [x for x in cases_days if x.split("_")[0] in train_case]
         test_id = [x for x in cases_days if x.split("_")[0] in test_case]
+
+        [train_id.remove(x) for x in bad_cases if x in train_id]
+        [test_id.remove(x) for x in bad_cases if x in train_id]
+
         train_datagen = DataLoader(train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
         test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
         
-        model = Unet3D(conv_settings=UNET_FILTERS)()
+        model = ResUnet3D(conv_settings=UNET_FILTERS, repeat=REPEAT, deep_supervision=DEEP_SUPERVISION)()
 
-        optimizer = Adam()
+        optimizer = Adam(learning_rate=initial_lr)
         
-        model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(0, 1, 2, 3), mean_axis=None), metrics=[Dice_Coef(spartial_axis=(2,3), mean_axis=(2, 1, 0))])
+        model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(0, 1, 2, 3)), metrics=[Dice_Coef(spartial_axis=(2,3), ignore_empty=True)])
         
         callbacks = [
-            ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', verbose=1, save_best_only=True, monitor="val_Dice_Coef", mode='max'),
+            CompetitionMetric(test_datagen, f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', period=10, deep_supervision=DEEP_SUPERVISION),
             LearningRateScheduler(schedule=poly_scheduler(initial_lr, no_of_epochs), verbose=1),
             CSVLogger(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.csv', separator=",", append=False)
         ]
         hist = model.fit_generator(train_datagen, 
                                 epochs=no_of_epochs, 
                                 callbacks = callbacks,
-                                validation_data=test_datagen,
                                 verbose=2)
-        hists.append(hist)
+        hists.append(callbacks[0].history)
         break
 
     # PLOT TRAINING RESULTS
     val_Dice_Coef = []
 
     for i in range(1, KFOLD + 1):
-        plot_training_result(hists[i-1], i)
-        val_Dice_Coef.append(np.max(hists[i-1].history['val_Dice_Coef']))
+        val_Dice_Coef.append(np.max(hists[i-1]["val_score"]))
         break
 
     print(val_Dice_Coef)

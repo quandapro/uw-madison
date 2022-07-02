@@ -10,10 +10,12 @@ class Unet3D:
     def __init__(self, num_classes = 3, 
                  input_shape = (None, None, None, 1),
                  conv_settings = [16, 32, 64, 128, 256], 
+                 deep_supervision = True,
                  activation = 'sigmoid'):
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.conv_settings = conv_settings
+        self.deep_supervision = deep_supervision
         self.activation = activation
     
     def conv_in_relu(self, inp, kernels, kernel_size = 3, stride = 1, bn_relu = True):
@@ -24,7 +26,7 @@ class Unet3D:
                     strides = stride)(x)
         if bn_relu:
             x = BatchNormalization()(x)
-            x = ReLU()(x)
+            x = LeakyReLU(alpha=0.01)(x)
         return x
     
     def conv_block(self, inp, kernels, downsample = False):
@@ -52,6 +54,8 @@ class Unet3D:
         
         inp = Input(self.input_shape)
 
+        outputs = []
+
         encoder_blocks = []
 
         # Encoder
@@ -70,13 +74,22 @@ class Unet3D:
         # Decoder
         for i in range(num_blocks - 1, 0, -1):
             out = self.up_conv_block(out, conv_settings[i - 1], encoder_blocks[i - 1])
+            if self.deep_supervision and 1 < i < 4:
+                pool_size = 2**(i - 1)
+                pred = Conv3D(self.num_classes, 
+                            kernel_size = (1, 1, 1), 
+                            padding = 'same')(out)
+                pred = UpSampling3D(pool_size)(pred)
+                pred = Activation(self.activation, name = f'output_{i}')(pred)
+                outputs.append(pred)
 
         out = Conv3D(self.num_classes, 
                     kernel_size = (1, 1, 1), 
                     padding = 'same')(out)
-
         out = Activation(self.activation)(out)
-        model = Model(inputs = inp, outputs = out)
+        outputs.append(out)
+
+        model = Model(inputs = inp, outputs = outputs)
         return model
 
 if __name__ == '__main__':

@@ -97,14 +97,15 @@ def dice_coef_numpy(y_true, y_pred, axis=(1,2), smooth = 1e-6, ignore_empty=True
         return np.sum(numerator / (denominator + smooth)) / (non_empty + smooth)
     return np.mean((numerator + smooth) / (denominator + smooth))
 
+from timeit import default_timer as timer
+
 class CompetitionMetric(Callback):
-    def __init__(self, validation_data, model_checkpoint, period = 10, deep_supervision = True, shape = (144, 266, 266)):
+    def __init__(self, validation_data, model_checkpoint, period = 10, deep_supervision = True, window_size = (64, 224, 224)):
         super(Callback, self).__init__()
         
         self.validation_data = validation_data
         self.model_checkpoint = model_checkpoint
         self.best_validation_score = -np.inf
-        self.max_dists = np.sqrt(np.sum([x ** 2 for x in shape]))
         self.deep_supervision = deep_supervision
         self.period = period
         self.history = {
@@ -112,34 +113,62 @@ class CompetitionMetric(Callback):
             "val_hausdorff" : [],
             "val_score"     : []
         } 
+        self.window_size = window_size
+        self.stride = tuple([x // 2 for x in window_size])
         
-    def sliding_window_inference(self, image, model, window_size=(64, 224, 224), stride=(32, 112, 112)):
+    def sliding_window_inference(self, volume):
         '''
             Sliding window inference
-            image : numpy.ndarray
-                Input 3D volume with shape = (Batch, Depth, Height, Width, Channel)
+            --------
+            volume : numpy.ndarray
+                Input 3D volume with shape = (1, Depth, Height, Width, 1)
             model : tf.keras.Model
-                Inference model
-            window_size : Tuple
-                Window size
-            stride : Tuple
-                Stride
+                Inference model output with shape = (1, Depth, Height, Width, 3)
+    
+            --------
+            return : numpy.ndarray
+                Output segmentation
         '''
-        return None
+        d, h, w = volume.shape[1:4]
+        w_d, w_h, w_w = self.window_size
+        s_d, s_h, s_w = self.stride
+        result = np.zeros((*volume.shape[:4], 3), dtype='float32')
+        overlap = np.zeros((*volume.shape[:4], 3), dtype='float32')
+        starting_points = [(x, y, z) for x in set( list(range(0, d - w_d, s_d)) + [d - w_d] ) 
+                                     for y in set( list(range(0, h - w_h, s_h)) + [h - w_h] ) 
+                                     for z in set( list(range(0, w - w_w, s_w)) + [w - w_w] )]
+
+        patches = np.empty((len(starting_points), *self.window_size, 1), dtype='float32')
+        for i, (x, y, z) in enumerate(starting_points):
+            patches[i] = volume[0, x:x + w_d, y:y + w_h, z:z + w_w, :]
+
+        y_pred = self.model.predict(patches, batch_size = 1)
+        if self.deep_supervision:
+            y_pred = y_pred[-1]
+        
+        for i in range(len(y_pred)):
+            x, y, z = starting_points[i]
+            result[:, x:x + w_d, y:y + w_h, z:z + w_w, :] += y_pred[i]
+            overlap[:, x:x + w_d, y:y + w_h, z:z + w_w, :] += 1.
+
+        assert np.sum(overlap == 0.) == 0, "Sliding window does not cover all volume"
+
+        return result / overlap
 
     def on_epoch_end(self, epoch, logs={}):
         if (epoch + 1) % self.period == 0:
+            start = timer()
+
             dice_coef = []
             hausdorff_metric = []
             comp_metric = []
             for X, y_true in self.validation_data:
-                y_pred = self.model.predict(X)
-                if self.deep_supervision:
-                    y_pred = y_pred[-1]
+                y_pred = self.sliding_window_inference(X)
                 # Thresholding
                 y_pred = (y_pred > 0.5).astype('float32')
                 dice_coef.append(dice_coef_numpy(y_true[0], y_pred[0]))
-                hausdorff_metric.append(hausdorff(y_true[0], y_pred[0], self.max_dists))
+                max_dist = np.sqrt(np.sum([x ** 2 for x in y_pred.shape[1:4]]))
+                hausdorff_metric.append(hausdorff(y_true[0], y_pred[0], max_dist))
                 comp_metric.append(0.4 * dice_coef[-1] + 0.6 * hausdorff_metric[-1])
 
             mean_dice_coef = np.mean(dice_coef)
@@ -157,3 +186,5 @@ class CompetitionMetric(Callback):
                 self.best_validation_score = result
             else:
                 print(f"Validation score does not improve from: {self.best_validation_score}")
+            end = timer()
+            print(f"Finished in {end - start}s")

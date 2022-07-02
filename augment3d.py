@@ -12,9 +12,10 @@ class Augment3D:
         self.transform = A.Compose([
                             A.HorizontalFlip(p=0.5),
                             A.ShiftScaleRotate(p=0.5),
-                            A.GridDistortion(p=0.2),
-                            A.RandomGamma(p=0.2)
+                            A.GridDistortion(p=0.3),
+                            A.RandomGamma(p=0.3)
                         ], additional_targets=keys)
+                        
         self.d = image_depth
         self.w = image_width
         self.h = image_height

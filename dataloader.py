@@ -31,13 +31,17 @@ class DataLoader(Sequence):
 
     def __getitem__(self, index):
         indices = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
-        X = np.empty((len(indices), *self.image_size), dtype='float32')
-        y = np.empty((len(indices), *self.mask_size), dtype='float32')
+        X = []
+        y = []
         for i in range(len(indices)):
             train_id = self.train_ids[indices[i]]
             image, mask = self.load_data(train_id)
             if self.augment is not None:
-                X[i], y[i] = self.augment(image, mask)
-            else:
-                X[i], y[i] = image.reshape(X.shape[1:]), mask
-        return X, y
+                image, mask = self.augment(image, mask)
+            X.append(image)
+            y.append(mask)
+        X = np.asarray(X, dtype='float32')
+        y = np.asarray(y, dtype='float32')
+        if len(X.shape) == 4:
+            X = np.expand_dims(X, axis=-1)
+        return X, y 

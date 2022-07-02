@@ -31,7 +31,7 @@ spec:
       - "/bin/sh"
       - "-c"
     args:
-      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_3D.py --batch 4 --description baseline_v1
+      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_3D.py --batch 4 --description unet3d_ds --epoch 500 --ds 1
     securityContext:
       allowPrivilegeEscalation: false
 

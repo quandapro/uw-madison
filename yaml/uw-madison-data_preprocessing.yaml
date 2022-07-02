@@ -34,3 +34,9 @@ spec:
       - cd /home/id202088518/Quan/uw-madison; python3 Prepare_Dataset.py
     securityContext:
       allowPrivilegeEscalation: false
+
+    resources:
+      requests:
+        nvidia.com/gpu: 0
+      limits:
+        nvidia.com/gpu: 0

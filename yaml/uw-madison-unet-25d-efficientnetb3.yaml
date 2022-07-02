@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: uw-madison-unet-2d-seresnet34
+  name: uw-madison-unet-25d-efficientnetb3
 spec:
   restartPolicy: Never
 
@@ -31,7 +31,7 @@ spec:
       - "/bin/sh"
       - "-c"
     args:
-      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_2D_Baseline.py --backbone seresnet34 --description seresnet34_tda
+      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_25D.py --backbone efficientnetb3 --description efficientnetb3_25d
     securityContext:
       allowPrivilegeEscalation: false
 
@@ -40,4 +40,3 @@ spec:
         nvidia.com/gpu: 1
       limits:
         nvidia.com/gpu: 1
-  nodeName: gpu-3
