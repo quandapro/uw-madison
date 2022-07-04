@@ -9,7 +9,7 @@ import gc
 class Unet3D:
     def __init__(self, num_classes = 3, 
                  input_shape = (None, None, None, 1),
-                 conv_settings = [16, 32, 64, 128, 256], 
+                 conv_settings = [32, 64, 128, 256, 320], 
                  deep_supervision = True,
                  activation = 'sigmoid'):
         self.input_shape = input_shape
@@ -26,7 +26,7 @@ class Unet3D:
                     strides = stride)(x)
         if bn_relu:
             x = BatchNormalization()(x)
-            x = LeakyReLU(alpha=0.01)(x)
+            x = ReLU()(x)
         return x
     
     def conv_block(self, inp, kernels, downsample = False):
@@ -35,14 +35,16 @@ class Unet3D:
         '''
         x = inp
         if downsample:
-            x = self.conv_in_relu(x, kernels, kernel_size=1, stride=2)
-        x = self.conv_in_relu(x, kernels, kernel_size=3, stride=1)
-        x = self.conv_in_relu(x, kernels, kernel_size=3, stride=1)
+            x = MaxPooling3D(pool_size=(2, 2, 2))(x)
+            x = Dropout(0.2)(x)
+        x = self.conv_in_relu(x, kernels)
+        x = self.conv_in_relu(x, kernels)
         return x
 
     def up_conv_block(self, inp, kernels, connect):
         x = UpSampling3D()(inp)
         x = Concatenate(axis=-1)([x, connect]) # Skip connection
+        x = Dropout(0.2)(x)
         x = self.conv_in_relu(x, kernels)
         x = self.conv_in_relu(x, kernels)
         return x

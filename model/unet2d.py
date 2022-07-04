@@ -35,7 +35,7 @@ class Unet2D:
         '''
         x = inp
         if downsample:
-            x = self.conv_in_relu(x, kernels=kernels, kernel_size=1, stride=2)
+            x = MaxPooling2D()(x)
         x = self.conv_in_relu(x, kernels=kernels)
         x = self.conv_in_relu(x, kernels=kernels)
         return x

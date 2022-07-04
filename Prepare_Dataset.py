@@ -12,11 +12,10 @@ import os
     CONFIGURATION
 '''
 TRAIN_DIR = './train/' # case/cases_day/scans
-preprocessed_folder_2d = './preprocessed_384x384'
+preprocessed_folder_2d = './preprocessed_2d'
 preprocessed_folder_3d = './preprocessed_3d'
 df = pd.read_csv("./train.csv")
 
-IMAGE_SIZE_3D = (144, 384, 384)
 NUM_CLASSES = 3
 TOP_CLIP_PERCENT = 95
 BOTTOM_CLIP_PERCENT = 5
@@ -118,6 +117,14 @@ def minmax_norm(volume):
     max_v = volume.max()
     return (volume - min_v) / (max_v - min_v)
 
+def zscore(volume):
+    volume = volume.astype('float32')
+    non_zero = volume[volume > 0]
+    mean = non_zero.mean()
+    std = non_zero.std()
+    volume[volume > 0] = (non_zero - mean) / std
+    return volume
+
 def preprocess(volume, top = TOP_CLIP_PERCENT, bottom = BOTTOM_CLIP_PERCENT):
     volume = clipping(volume, top, bottom)
     return minmax_norm(volume)
@@ -143,10 +150,6 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
     case = df_train["case"][current_index]
     day = df_train["day"][current_index]
 
-    # Ignore bad cases
-    if (case == 7 and day == 0) or (case == 8 and day == 30):
-        continue
-
     # Create scan and mask volume
     for j in range(num_scans):
         image, size = open_image(df_train["path"][current_index + j])
@@ -162,14 +165,12 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
         mask_volume[j] = mask
 
     scan_volume = preprocess(scan_volume)
-    
-    # scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], (num_scans, *IMAGE_SIZE_3D[1:]))
+
     # for j in range(num_scans):
     #     scan_id = df_train["id"][current_index + j]
     #     np.save(f"{preprocessed_folder_2d}/{scan_id}.npy", scan_volume[j])
     #     np.save(f"{preprocessed_folder_2d}/{scan_id}_mask.npy", mask_volume[j])
 
-    # scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], IMAGE_SIZE_3D)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}.npy", scan_volume)
     np.save(f"{preprocessed_folder_3d}/case{case}_day{day}_mask.npy", mask_volume)
 

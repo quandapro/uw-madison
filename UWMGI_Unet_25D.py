@@ -21,7 +21,6 @@ from tensorflow.keras.losses import *
 from tensorflow.keras.optimizers import *
 from segmentation_models.metrics import *
 import segmentation_models as sm
-from keras_unet_collection.models import unet_3plus_2d
 
 from metrics import *
 from dataloader import DataLoader
@@ -35,7 +34,7 @@ from model.unet2d import Unet2D
 parser = argparse.ArgumentParser()
 parser.add_argument("--backbone", type=str, help="Unet backbone")
 parser.add_argument("--description", type=str, help="Model description", default="25d")
-parser.add_argument("--batch", type=int, help="Batch size", default=32)
+parser.add_argument("--batch", type=int, help="Batch size", default=16)
 parser.add_argument("--datafolder", type=str, help="Data folder", default='preprocessed_384x384_2_25d')
 parser.add_argument("--seed", type=int, help="Seed for random generator", default=2022)
 parser.add_argument("--csv", type=str, help="Dataframe path", default='preprocessed_train.csv')
@@ -70,7 +69,7 @@ TRANSFORM = A.Compose([
     A.RandomGamma(p=0.3),
 ])
 
-bad_cases = ["case7_day0", "case81_day30"]
+bad_cases = ["case7_day0", "case81_day30", "case138_day0", "case43_day18"]
 
 initial_lr = 3e-4
 min_lr = 1e-6
@@ -132,7 +131,7 @@ if __name__ == "__main__":
         cleaned_test_id = [x for x in test_id if not is_bad(x)]
 
         train_datagen = DataLoader(cleaned_train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
-        test_datagen = DataLoader(cleaned_test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=16, shuffle=False, augment=None)
+        test_datagen = DataLoader(cleaned_test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
         
         if MODEL_NAME == "ResUnet2D_DS":
             model = ResUnet2D(input_shape=(None, None, TRAINING_SIZE[-1]), deep_supervision=True)()

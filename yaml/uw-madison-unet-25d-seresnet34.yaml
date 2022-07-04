@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: uw-madison-unet-3d-resnet-swi-loss
+  name: uw-madison-unet-25d-seresnet34
 spec:
   restartPolicy: Never
 
@@ -31,7 +31,7 @@ spec:
       - "/bin/sh"
       - "-c"
     args:
-      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_3D.py --batch 4 --description residual_ds_loss_unet3d --repeat 2 --epoch 500 --ds 1 --datafolder preprocessed_3d
+      - cd /home/id202088518/Quan/uw-madison; python3 UWMGI_Unet_25D.py --backbone seresnet34 --description seresnet34_25d
     securityContext:
       allowPrivilegeEscalation: false
 

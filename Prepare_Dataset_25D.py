@@ -19,8 +19,6 @@ df = pd.read_csv("./train.csv")
 IMAGE_SIZE_2D = (384, 384)
 ADJACENT_SLICES = 2
 NUM_CLASSES = 3
-TOP_CLIP_PERCENT = 2
-BOTTOM_CLIP_PERCENT = 2
 
 preprocessed_folder_2d = f'./preprocessed_384x384'
 preprocessed_folder_25d = f'./preprocessed_384x384_{ADJACENT_SLICES}_25d'

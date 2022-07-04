@@ -31,7 +31,7 @@ class ResUnet3D:
             x = ReLU()(x)
         return x
     
-    def residual_conv_block(self, inp, kernels, repeat = 2, downsample = False):
+    def residual_conv_block(self, inp, kernels, repeat = 1, downsample = False):
         '''
             Residual convolution block
         '''

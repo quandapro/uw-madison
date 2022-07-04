@@ -142,7 +142,7 @@ class CompetitionMetric(Callback):
         for i, (x, y, z) in enumerate(starting_points):
             patches[i] = volume[0, x:x + w_d, y:y + w_h, z:z + w_w, :]
 
-        y_pred = self.model.predict(patches, batch_size = 1)
+        y_pred = self.model.predict(patches, batch_size = 4)
         if self.deep_supervision:
             y_pred = y_pred[-1]
         

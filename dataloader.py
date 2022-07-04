@@ -42,6 +42,6 @@ class DataLoader(Sequence):
             y.append(mask)
         X = np.asarray(X, dtype='float32')
         y = np.asarray(y, dtype='float32')
-        if len(X.shape) == 4:
+        if len(X.shape) == len(self.image_size):
             X = np.expand_dims(X, axis=-1)
         return X, y 
