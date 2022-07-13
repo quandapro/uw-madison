@@ -18,7 +18,7 @@ class Unet3D:
         self.deep_supervision = deep_supervision
         self.activation = activation
     
-    def conv_in_relu(self, inp, kernels, kernel_size = 3, stride = 1, bn_relu = True):
+    def conv_bn_relu(self, inp, kernels, kernel_size = 3, stride = 1, bn_relu = True):
         x = inp
         x = Conv3D(kernels, 
                     kernel_size = kernel_size,
@@ -36,17 +36,15 @@ class Unet3D:
         x = inp
         if downsample:
             x = MaxPooling3D(pool_size=(2, 2, 2))(x)
-            x = Dropout(0.2)(x)
-        x = self.conv_in_relu(x, kernels)
-        x = self.conv_in_relu(x, kernels)
+        x = self.conv_bn_relu(x, kernels)
+        x = self.conv_bn_relu(x, kernels)
         return x
 
     def up_conv_block(self, inp, kernels, connect):
         x = UpSampling3D()(inp)
         x = Concatenate(axis=-1)([x, connect]) # Skip connection
-        x = Dropout(0.2)(x)
-        x = self.conv_in_relu(x, kernels)
-        x = self.conv_in_relu(x, kernels)
+        x = self.conv_bn_relu(x, kernels)
+        x = self.conv_bn_relu(x, kernels)
         return x
 
     def __call__(self):

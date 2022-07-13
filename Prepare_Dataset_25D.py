@@ -18,10 +18,11 @@ df = pd.read_csv("./train.csv")
 
 IMAGE_SIZE_2D = (384, 384)
 ADJACENT_SLICES = 2
+STRIDE = 1
 NUM_CLASSES = 3
 
-preprocessed_folder_2d = f'./preprocessed_384x384'
-preprocessed_folder_25d = f'./preprocessed_384x384_{ADJACENT_SLICES}_25d'
+preprocessed_folder_2d = f'./preprocessed_2d'
+preprocessed_folder_25d = f'./preprocessed_25d'
 
 class_map = ["large_bowel", "small_bowel", "stomach"]
 
@@ -78,11 +79,11 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
         result_image = np.zeros((*IMAGE_SIZE_2D, ADJACENT_SLICES * 2 + 1), dtype='float32')
         result_mask = np.load(f"{preprocessed_folder_2d}/{scan_id}_mask.npy")
 
-        for k in range(-ADJACENT_SLICES, ADJACENT_SLICES + 1):
+        for k in range(-ADJACENT_SLICES - STRIDE + 1, ADJACENT_SLICES + STRIDE, STRIDE): # -2 -1 0 1 2
             if j + k < 0 or j + k >= num_scans:
                 continue
             scan_id = df_train["id"][current_index + j + k]
-            result_image[..., k + ADJACENT_SLICES] = np.load(f"{preprocessed_folder_2d}/{scan_id}.npy")
+            result_image[..., k // STRIDE + ADJACENT_SLICES] = np.load(f"{preprocessed_folder_2d}/{scan_id}.npy")
 
         scan_id = df_train["id"][current_index + j]
         np.save(f"{preprocessed_folder_25d}/{scan_id}.npy", result_image)

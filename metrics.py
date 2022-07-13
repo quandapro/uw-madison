@@ -7,6 +7,7 @@ from tensorflow.keras.callbacks import Callback
 
 import numpy as np
 from monai.metrics.utils import get_mask_edges, get_surface_distance
+from scipy.ndimage.filters import gaussian_filter
 
 '''
     METRICS AND LOSS FUNCTIONS
@@ -100,7 +101,7 @@ def dice_coef_numpy(y_true, y_pred, axis=(1,2), smooth = 1e-6, ignore_empty=True
 from timeit import default_timer as timer
 
 class CompetitionMetric(Callback):
-    def __init__(self, validation_data, model_checkpoint, period = 10, deep_supervision = True, window_size = (64, 224, 224)):
+    def __init__(self, validation_data, model_checkpoint, period = 10, deep_supervision = True, patch_size = (64, 224, 224)):
         super(Callback, self).__init__()
         
         self.validation_data = validation_data
@@ -113,8 +114,24 @@ class CompetitionMetric(Callback):
             "val_hausdorff" : [],
             "val_score"     : []
         } 
-        self.window_size = window_size
-        self.stride = tuple([x // 2 for x in window_size])
+        self.patch_size = patch_size
+        self.stride = tuple([x // 2 for x in patch_size])
+        self.gaussian_importance_map = self._get_gaussian(patch_size, sigma_scale = 1. / 8)
+
+    def _get_gaussian(self, patch_size, sigma_scale):
+        tmp = np.zeros(patch_size)
+        center_coords = [i // 2 for i in patch_size]
+        sigmas = [i * sigma_scale for i in patch_size]
+        tmp[tuple(center_coords)] = 1
+        gaussian_importance_map = gaussian_filter(tmp, sigmas, 0, mode='constant', cval=0)
+        gaussian_importance_map = gaussian_importance_map / np.max(gaussian_importance_map) * 1
+        gaussian_importance_map = gaussian_importance_map.astype(np.float32)
+
+        # gaussian_importance_map cannot be 0, otherwise we may end up with nans!
+        gaussian_importance_map[gaussian_importance_map == 0] = np.min(
+            gaussian_importance_map[gaussian_importance_map != 0])
+
+        return gaussian_importance_map
         
     def sliding_window_inference(self, volume):
         '''
@@ -122,15 +139,13 @@ class CompetitionMetric(Callback):
             --------
             volume : numpy.ndarray
                 Input 3D volume with shape = (1, Depth, Height, Width, 1)
-            model : tf.keras.Model
-                Inference model output with shape = (1, Depth, Height, Width, 3)
-    
+
             --------
             return : numpy.ndarray
                 Output segmentation
         '''
         d, h, w = volume.shape[1:4]
-        w_d, w_h, w_w = self.window_size
+        w_d, w_h, w_w = self.patch_size
         s_d, s_h, s_w = self.stride
         result = np.zeros((*volume.shape[:4], 3), dtype='float32')
         overlap = np.zeros((*volume.shape[:4], 3), dtype='float32')
@@ -138,7 +153,7 @@ class CompetitionMetric(Callback):
                                      for y in set( list(range(0, h - w_h, s_h)) + [h - w_h] ) 
                                      for z in set( list(range(0, w - w_w, s_w)) + [w - w_w] )]
 
-        patches = np.empty((len(starting_points), *self.window_size, 1), dtype='float32')
+        patches = np.empty((len(starting_points), *self.patch_size, 1), dtype='float32')
         for i, (x, y, z) in enumerate(starting_points):
             patches[i] = volume[0, x:x + w_d, y:y + w_h, z:z + w_w, :]
 
@@ -148,8 +163,9 @@ class CompetitionMetric(Callback):
         
         for i in range(len(y_pred)):
             x, y, z = starting_points[i]
-            result[:, x:x + w_d, y:y + w_h, z:z + w_w, :] += y_pred[i]
-            overlap[:, x:x + w_d, y:y + w_h, z:z + w_w, :] += 1.
+            for j in range(y_pred.shape[-1]):
+                result[:, x:x + w_d, y:y + w_h, z:z + w_w, j] += y_pred[i,...,j] * self.gaussian_importance_map
+                overlap[:, x:x + w_d, y:y + w_h, z:z + w_w, j] += self.gaussian_importance_map
 
         assert np.sum(overlap == 0.) == 0, "Sliding window does not cover all volume"
 

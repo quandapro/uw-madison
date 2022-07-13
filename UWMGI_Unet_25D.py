@@ -19,14 +19,11 @@ import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import *
 from tensorflow.keras.losses import *
 from tensorflow.keras.optimizers import *
-from segmentation_models.metrics import *
-import segmentation_models as sm
 
 from metrics import *
 from dataloader import DataLoader
 from utils import *
 from model.residual_unet2d import ResUnet2D
-from model.unet2d import Unet2D
 
 '''
     PARSE ARGUMENTS
@@ -35,7 +32,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--backbone", type=str, help="Unet backbone")
 parser.add_argument("--description", type=str, help="Model description", default="25d")
 parser.add_argument("--batch", type=int, help="Batch size", default=16)
-parser.add_argument("--datafolder", type=str, help="Data folder", default='preprocessed_384x384_2_25d')
+parser.add_argument("--datafolder", type=str, help="Data folder", default='preprocessed_25d')
 parser.add_argument("--seed", type=int, help="Seed for random generator", default=2022)
 parser.add_argument("--csv", type=str, help="Dataframe path", default='preprocessed_train.csv')
 parser.add_argument("--trainsize", type=str, help="Training image size", default="224x224x5")
@@ -72,7 +69,6 @@ TRANSFORM = A.Compose([
 bad_cases = ["case7_day0", "case81_day30", "case138_day0", "case43_day18"]
 
 initial_lr = 3e-4
-min_lr = 1e-6
 no_of_epochs = args.epoch
 
 def augment(X, y):
@@ -91,8 +87,6 @@ def is_bad(x):
     MAIN PROGRAM
 '''
 if __name__ == "__main__":
-    sm.set_framework("tf.keras")
-
     # REPRODUCIBILITY
     seed_everything(RANDOM_SEED)
 
@@ -130,31 +124,27 @@ if __name__ == "__main__":
         cleaned_train_id = [x for x in train_id if not is_bad(x)]
         cleaned_test_id = [x for x in test_id if not is_bad(x)]
 
+        cleaned_train_id += cleaned_test_id
+
         train_datagen = DataLoader(cleaned_train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
-        test_datagen = DataLoader(cleaned_test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
+        # test_datagen = DataLoader(cleaned_test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
         
-        if MODEL_NAME == "ResUnet2D_DS":
-            model = ResUnet2D(input_shape=(None, None, TRAINING_SIZE[-1]), deep_supervision=True)()
-            monitor = 'val_output_final_Dice_Coef'
-        elif MODEL_NAME == "Unet2D_DS":
-            model = Unet2D(input_shape=(None, None, TRAINING_SIZE[-1]), deep_supervision=True)()
-            monitor = 'val_output_final_Dice_Coef'
-        else:
-            model = sm.Unet(MODEL_NAME, input_shape=(None, None, TRAINING_SIZE[-1]), classes=NUM_CLASSES, activation='sigmoid', encoder_weights=None)
+        model = ResUnet2D(input_shape=(None, None, TRAINING_SIZE[-1]), deep_supervision=True)()
+        monitor = 'val_output_final_Dice_Coef'
         
         optimizer = Adam(learning_rate=initial_lr)
 
         model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(0, 1, 2)), metrics=[Dice_Coef(spartial_axis=(1, 2), ignore_empty=False)])
         
         callbacks = [
-            ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', verbose=1, save_best_only=True, monitor=monitor, mode='max'),
+            ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}.h5', verbose=1, save_best_only=False),
             LearningRateScheduler(schedule=poly_scheduler(initial_lr, no_of_epochs), verbose=1),
             CSVLogger(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.csv', separator=",", append=False)
         ]
         hist = model.fit_generator(train_datagen, 
                                 epochs=no_of_epochs, 
                                 callbacks = callbacks,
-                                validation_data=test_datagen,
+                                # validation_data=test_datagen,
                                 verbose=2)
         hists.append(hist)
         break

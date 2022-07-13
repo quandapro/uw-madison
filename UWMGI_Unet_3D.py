@@ -41,12 +41,12 @@ parser.add_argument("--batch", type=int, help="Batch size", default=16)
 parser.add_argument("--datafolder", type=str, help="Data folder", default='preprocessed_3d')
 parser.add_argument("--seed", type=int, help="Seed for random generator", default=2022)
 parser.add_argument("--csv", type=str, help="Dataframe path", default='preprocessed_train.csv')
-parser.add_argument("--trainsize", type=str, help="Training image size", default="64x224x224x1")
-parser.add_argument("--unet", type=str, help="Unet conv settings", default="16x32x64x128x256")
+parser.add_argument("--trainsize", type=str, help="Training image size", default="80x160x160x1")
+parser.add_argument("--unet", type=str, help="Unet conv settings", default="32x64x128x256x320")
 parser.add_argument("--repeat", type=int, help="Unet repeat conv settings", default=2)
 parser.add_argument("--ds", type=int, help="Enable deep supervision", default=0)
 parser.add_argument("--fold", type=int, help="Number of folds", default=5)
-parser.add_argument("--epoch", type=int, help="Number of epochs", default=300)
+parser.add_argument("--epoch", type=int, help="Number of epochs", default=1000)
 args = parser.parse_args()
 
 '''
@@ -71,8 +71,7 @@ augment = Augment3D(TRAINING_SIZE[0], TRAINING_SIZE[1], TRAINING_SIZE[2], NUM_CL
 UNET_FILTERS = [int(x) for x in args.unet.split("x")]
 REPEAT = [args.repeat] * len(UNET_FILTERS)
 DEEP_SUPERVISION = args.ds != 0
-initial_lr = 3e-4
-min_lr = 1e-6
+initial_lr = 1e-2
 no_of_epochs = args.epoch
 epochs_per_cycle = no_of_epochs
 
@@ -128,17 +127,22 @@ if __name__ == "__main__":
         [train_id.remove(x) for x in bad_cases if x in train_id]
         [test_id.remove(x) for x in bad_cases if x in train_id]
 
+        train_id += test_id
+
         train_datagen = DataLoader(train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
-        test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
+        # test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
         
         model = Unet3D(conv_settings=UNET_FILTERS, deep_supervision=DEEP_SUPERVISION)()
 
-        optimizer = Adam(learning_rate=initial_lr)
+        optimizer = SGD(learning_rate=initial_lr, nesterov=True, momentum=0.9)
+        # optimizer = tfa.optimizers.SWA(optimizer)
+        # optimizer = Adam(learning_rate=initial_lr)
         
         model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(0, 1, 2, 3)), metrics=[Dice_Coef(spartial_axis=(2,3), ignore_empty=True)])
         
         callbacks = [
-            CompetitionMetric(test_datagen, f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', period=10, deep_supervision=DEEP_SUPERVISION, window_size=TRAINING_SIZE[:3]),
+            # CompetitionMetric(test_datagen, f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', period=10, deep_supervision=DEEP_SUPERVISION, patch_size=TRAINING_SIZE[:3]),
+            ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}.h5', verbose=1),
             LearningRateScheduler(schedule=poly_scheduler(initial_lr, no_of_epochs), verbose=1),
             CSVLogger(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.csv', separator=",", append=False)
         ]
@@ -146,16 +150,15 @@ if __name__ == "__main__":
                                 epochs=no_of_epochs, 
                                 callbacks = callbacks,
                                 verbose=2)
-        hists.append(callbacks[0].history)
         break
 
     # PLOT TRAINING RESULTS
-    val_Dice_Coef = []
+    # val_Dice_Coef = []
 
-    for i in range(1, KFOLD + 1):
-        val_Dice_Coef.append(np.max(hists[i-1]["val_score"]))
-        break
+    # for i in range(1, KFOLD + 1):
+    #     val_Dice_Coef.append(np.max(hists[i-1]["val_score"]))
+    #     break
 
-    print(val_Dice_Coef)
-    print(f"{np.mean(val_Dice_Coef)} +- {np.std(val_Dice_Coef)}")
+    # print(val_Dice_Coef)
+    # print(f"{np.mean(val_Dice_Coef)} +- {np.std(val_Dice_Coef)}")
     print("Done!")

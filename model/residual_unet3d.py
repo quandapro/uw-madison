@@ -20,7 +20,7 @@ class ResUnet3D:
         self.deep_supervision = deep_supervision
         self.activation = activation
     
-    def conv_in_relu(self, inp, kernels, kernel_size = 3, stride = 1, bn_relu = True):
+    def conv_bn_relu(self, inp, kernels, kernel_size = 3, stride = 1, bn_relu = True):
         x = inp
         x = Conv3D(kernels, 
                     kernel_size = kernel_size,
@@ -31,7 +31,7 @@ class ResUnet3D:
             x = ReLU()(x)
         return x
     
-    def residual_conv_block(self, inp, kernels, repeat = 1, downsample = False):
+    def residual_conv_block(self, inp, kernels, repeat = 2, downsample = False):
         '''
             Residual convolution block
         '''
@@ -41,16 +41,17 @@ class ResUnet3D:
             if i == 0 and downsample:
                 stride = 2
 
-            skip_conn = self.conv_in_relu(x, kernels, 1, stride, False)
+            skip_conn = self.conv_bn_relu(x, kernels, 1, stride, False)
 
-            x = self.conv_in_relu(x, kernels, 3, stride)
-            x = self.conv_in_relu(x, kernels, bn_relu=False)
+            x = self.conv_bn_relu(x, kernels, 3, stride)
+            x = self.conv_bn_relu(x, kernels, bn_relu=False)
             
             # Residual connection
             x = Add()([x, skip_conn])
             x = BatchNormalization()(x)
             x = ReLU()(x)
         return x
+
 
     def up_conv_block(self, inp, kernels, connect):
         '''

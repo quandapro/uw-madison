@@ -11,7 +11,7 @@ class Augment3D:
         keys.update({f'mask{i}' : 'mask' for i in range(1, image_depth)})
         self.transform = A.Compose([
                             A.HorizontalFlip(p=0.5),
-                            A.ShiftScaleRotate(p=0.5, shift_limit=0.),
+                            A.ShiftScaleRotate(p=0.5),
                             A.GridDistortion(p=0.3),
                             A.RandomGamma(p=0.3)
                         ], additional_targets=keys)

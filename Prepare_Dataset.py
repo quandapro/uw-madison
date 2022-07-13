@@ -166,13 +166,15 @@ for i in tqdm.tnrange(0, len(case_index) - 1):
 
     scan_volume = preprocess(scan_volume)
 
-    # for j in range(num_scans):
-    #     scan_id = df_train["id"][current_index + j]
-    #     np.save(f"{preprocessed_folder_2d}/{scan_id}.npy", scan_volume[j])
-    #     np.save(f"{preprocessed_folder_2d}/{scan_id}_mask.npy", mask_volume[j])
+    scan_volume, mask_volume = center_padding_3d([scan_volume, mask_volume], (num_scans, 384, 384))
 
-    np.save(f"{preprocessed_folder_3d}/case{case}_day{day}.npy", scan_volume)
-    np.save(f"{preprocessed_folder_3d}/case{case}_day{day}_mask.npy", mask_volume)
+    for j in range(num_scans):
+        scan_id = df_train["id"][current_index + j]
+        np.save(f"{preprocessed_folder_2d}/{scan_id}.npy", scan_volume[j])
+        np.save(f"{preprocessed_folder_2d}/{scan_id}_mask.npy", mask_volume[j])
+
+    # np.save(f"{preprocessed_folder_3d}/case{case}_day{day}.npy", scan_volume)
+    # np.save(f"{preprocessed_folder_3d}/case{case}_day{day}_mask.npy", mask_volume)
 
 
 
