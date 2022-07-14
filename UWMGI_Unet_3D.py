@@ -44,7 +44,7 @@ parser.add_argument("--csv", type=str, help="Dataframe path", default='preproces
 parser.add_argument("--trainsize", type=str, help="Training image size", default="80x160x160x1")
 parser.add_argument("--unet", type=str, help="Unet conv settings", default="32x64x128x256x320")
 parser.add_argument("--repeat", type=int, help="Unet repeat conv settings", default=2)
-parser.add_argument("--ds", type=int, help="Enable deep supervision", default=0)
+parser.add_argument("--ds", type=int, help="Enable deep supervision", default=1)
 parser.add_argument("--fold", type=int, help="Number of folds", default=5)
 parser.add_argument("--epoch", type=int, help="Number of epochs", default=1000)
 args = parser.parse_args()
@@ -77,7 +77,7 @@ epochs_per_cycle = no_of_epochs
 
 class_map = ["large_bowel", "small_bowel", "stomach"]
 
-bad_cases = ["case7_day0", "case81_day30", "case138_day0", "case43_day18"]
+bad_cases = ["case7_day0", "case81_day30"]
 
 '''
     MAIN PROGRAM
@@ -132,17 +132,17 @@ if __name__ == "__main__":
         train_datagen = DataLoader(train_id, TRAINING_SIZE, (*TRAINING_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=BATCH_SIZE, shuffle=True, augment=augment)
         # test_datagen = DataLoader(test_id, VALID_SIZE, (*VALID_SIZE[:-1], NUM_CLASSES), DATAFOLDER, batch_size=1, shuffle=False, augment=None)
         
-        model = Unet3D(conv_settings=UNET_FILTERS, deep_supervision=DEEP_SUPERVISION)()
+        model = ResUnet3D(conv_settings=UNET_FILTERS, deep_supervision=DEEP_SUPERVISION)()
 
         optimizer = SGD(learning_rate=initial_lr, nesterov=True, momentum=0.9)
         # optimizer = tfa.optimizers.SWA(optimizer)
         # optimizer = Adam(learning_rate=initial_lr)
         
-        model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(0, 1, 2, 3)), metrics=[Dice_Coef(spartial_axis=(2,3), ignore_empty=True)])
+        model.compile(optimizer=optimizer, loss=bce_dice_loss(spartial_axis=(1, 2, 3)), metrics=[Dice_Coef(spartial_axis=(2,3), ignore_empty=True)])
         
         callbacks = [
             # CompetitionMetric(test_datagen, f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.h5', period=10, deep_supervision=DEEP_SUPERVISION, patch_size=TRAINING_SIZE[:3]),
-            ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}.h5', verbose=1),
+            ModelCheckpoint(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}.h5', save_weights_only=True, verbose=1),
             LearningRateScheduler(schedule=poly_scheduler(initial_lr, no_of_epochs), verbose=1),
             CSVLogger(f'{MODEL_CHECKPOINTS_FOLDER}/{MODEL_NAME}/{MODEL_DESC}_fold{fold}.csv', separator=",", append=False)
         ]
