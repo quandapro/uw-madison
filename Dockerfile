@@ -1,8 +1,8 @@
-FROM tensorflow/tensorflow:2.4.0-gpu
+FROM tensorflow/tensorflow:2.9.1-gpu
 WORKDIR /root/Share/uw-madison
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get autoclean; apt-get update --allow-insecure-repositories; apt-get install ffmpeg libsm6 libxext6 git -y
+RUN apt-get autoclean; apt-get update --allow-insecure-repositories; apt-get install ffmpeg libsm6 libxext6 git gfortran libopenblas-dev liblapack-dev -y
     
 RUN python3 -m pip install --upgrade pip
 
@@ -28,5 +28,9 @@ RUN pip3 install \
     jupyter \
     ipywidgets \
     tensorflow-addons
+
+RUN pip3 install -U numpy
+
+RUN python3 -m pip install git+https://github.com/huggingface/transformers
 
 
